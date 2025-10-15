@@ -16,6 +16,9 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.create
+import androidx.recyclerview.widget.RecyclerView
+import com.yatri.tasks.TasksAdapter
+import androidx.recyclerview.widget.LinearLayoutManager
 
 class TasksFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -24,15 +27,17 @@ class TasksFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val list = view.findViewById<ListView>(R.id.listTasks)
-        val api = Network.retrofit.create<TaskApi>()
+        val rv = view.findViewById<RecyclerView>(R.id.rvTasks)
+        val api = Network.retrofit.create(com.yatri.tasks.TasksApi::class.java)
+        val adapter = TasksAdapter(emptyList()) { /* TODO: action */ }
+        rv.layoutManager = LinearLayoutManager(requireContext())
+        rv.adapter = adapter
         lifecycleScope.launch {
             try {
                 // TODO: load activeRoleId from DataStore if available
                 val roleId = "1"
-                val tasks = api.getAssignedTasks(roleId).data
-                val items = tasks.map { "${'$'}{it.task_title} • ${'$'}{it.task_status}" }
-                list.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items)
+                val tasks = api.getAssignedTasks(roleId)
+                adapter.updateData(tasks)
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), e.message ?: "Failed to load tasks", Toast.LENGTH_LONG).show()
             }
@@ -40,24 +45,5 @@ class TasksFragment : Fragment() {
     }
 }
 
-// Minimal models mirroring RN
-@Serializable
-data class AssignedTask(
-    val assignment_id: String,
-    val task_id: String,
-    val task_title: String,
-    val task_description: String,
-    val task_priority: String,
-    val task_due_date: String,
-    val task_status: String
-)
-
-@Serializable
-data class AssignedTasksEnvelope(val status: String? = null, val data: List<AssignedTask> = emptyList())
-
-interface TaskApi {
-    @GET("task-assignments/assigned-to-me/organization")
-    suspend fun getAssignedTasks(@Query("roleId") roleId: String): AssignedTasksEnvelope
-}
 
 
