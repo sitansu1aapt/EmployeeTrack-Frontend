@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/blue_500"
+        android:padding="16dp">
+        <TextView
+            android:id="@+id/tvHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Notification Message Management"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tvSummary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 unread • 0 total"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/card_bg"
+        android:padding="8dp">
+        <LinearLayout
+            android:id="@+id/filterTypeRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btnAllType" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="All" style="@style/PillButton" />
+            <Button android:id="@+id/btnEmergency" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Emergency Alert" android:layout_marginStart="8dp" style="@style/PillButton" />
+            <Button android:id="@+id/btnMessage" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Message" android:layout_marginStart="8dp" style="@style/PillButton" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <LinearLayout
+        android:id="@+id/filterSeenRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/card_bg"
+        android:padding="8dp">
+        <Button android:id="@+id/btnAllSeen" android:layout_width="0dp" android:layout_height="wrap_content" android:text="All" android:layout_weight="1" style="@style/PillButton" />
+        <Button android:id="@+id/btnUnread" android:layout_width="0dp" android:layout_height="wrap_content" android:text="Unread" android:layout_weight="1" android:layout_marginStart="8dp" style="@style/PillButton" />
+        <Button android:id="@+id/btnRead" android:layout_width="0dp" android:layout_height="wrap_content" android:text="Read" android:layout_weight="1" android:layout_marginStart="8dp" style="@style/PillButton" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false" />
+
+</LinearLayout>
+
+

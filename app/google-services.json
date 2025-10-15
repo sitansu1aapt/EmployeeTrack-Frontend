@@ -1,0 +1,51 @@
+{
+  "project_info": {
+    "project_number": "1058079554907",
+    "firebase_url": "https://flyingchital-default-rtdb.firebaseio.com",
+    "project_id": "flyingchital",
+    "storage_bucket": "flyingchital.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1058079554907:android:8e425aa8f78d095b2dae7e",
+        "android_client_info": {
+          "package_name": "com.flyingchittal.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1p5F3N6FEv5K2fKpMrSX2m8nQKbrprsw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1058079554907:android:977356d06084ae6b2dae7e",
+        "android_client_info": {
+          "package_name": "com.yatri"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1p5F3N6FEv5K2fKpMrSX2m8nQKbrprsw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+
+

@@ -1,0 +1,38 @@
+package com.yatri.net
+
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import com.yatri.AppConfig
+import com.yatri.TokenStore
+import okhttp3.Interceptor
+
+object Network {
+    private val json = Json { ignoreUnknownKeys = true }
+    private val client = OkHttpClient.Builder()
+        .apply {
+            if (AppConfig.LOG_HTTP) {
+                val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+                addInterceptor(logging)
+            }
+            addInterceptor(Interceptor { chain ->
+                val req = chain.request()
+                val tok = TokenStore.token
+                if (tok.isNullOrBlank()) return@Interceptor chain.proceed(req)
+                val authReq = req.newBuilder().addHeader("Authorization", "Bearer $tok").build()
+                chain.proceed(authReq)
+            })
+        }
+        .build()
+
+    val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(AppConfig.API_BASE_URL)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .client(client)
+        .build()
+}
+
+

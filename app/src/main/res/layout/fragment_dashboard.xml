@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- User header (static placeholder) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_avatar_circle"/>
+                <TextView
+                    android:id="@+id/tvAvatarInitial"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="E"
+                    android:textColor="#fff"
+                    android:textStyle="bold"
+                    android:textSize="20sp"/>
+            </FrameLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="12dp">
+                <TextView
+                    android:id="@+id/tvUserName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Employee"
+                    android:textStyle="bold"
+                    android:textSize="18sp"/>
+                <TextView
+                    android:id="@+id/tvRole"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Role"
+                    android:textSize="14sp"
+                    android:textColor="#7A8A99"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Status card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:elevation="2dp"
+            android:padding="16dp"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="#E74C3C"/>
+                <TextView
+                    android:id="@+id/tvDutyStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="  Off Duty"
+                    android:textStyle="bold"
+                    android:textSize="16sp"/>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Real-Time Tracking"
+                    android:textSize="14sp"
+                    android:layout_marginEnd="8dp"/>
+                <Switch
+                    android:id="@+id/swBackground"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCheckIn"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Check In"
+                    android:icon="@drawable/ic_check_in"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:backgroundTint="@color/blue_500"
+                    app:cornerRadius="24dp"
+                    android:textColor="@android:color/white" />
+                <Space
+                    android:layout_width="12dp"
+                    android:layout_height="1dp"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCheckOut"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Check Out"
+                    android:icon="@drawable/ic_check_out"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:backgroundTint="@color/blue_500"
+                    app:cornerRadius="24dp"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+            
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPatrols"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Patrols"
+                android:icon="@drawable/ic_patrols"
+                style="@style/Widget.MaterialComponents.Button"
+                android:backgroundTint="@color/blue_500"
+                app:cornerRadius="24dp"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="12dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:elevation="2dp"
+            android:padding="16dp"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="220dp">
+                <fragment
+                    android:id="@+id/mapFragment"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+                    <ImageButton
+                        android:id="@+id/btnCenter"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_card"
+                        android:contentDescription="Center to my location"
+                        android:src="@android:drawable/ic_menu_mylocation"/>
+                    <Space android:layout_width="8dp" android:layout_height="1dp"/>
+                    <ImageButton
+                        android:id="@+id/btnRefresh"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_card"
+                        android:contentDescription="Refresh location"
+                        android:src="@android:drawable/ic_popup_sync"/>
+                </LinearLayout>
+            </FrameLayout>
+            <TextView
+                android:id="@+id/tvLatLng"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lat: --, Long: --"
+                android:layout_marginTop="8dp"/>
+            <TextView
+                android:id="@+id/tvAccuracy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Accuracy: --"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <!-- Attendance history card -->
+        <LinearLayout
+            android:id="@+id/cardAttendance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:elevation="2dp"
+            android:padding="16dp"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Attendance History"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View your attendance records"
+                android:textColor="#7A8A99"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
+
+
