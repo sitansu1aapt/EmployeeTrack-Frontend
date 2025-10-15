@@ -36,8 +36,8 @@ class TasksFragment : Fragment() {
             try {
                 // TODO: load activeRoleId from DataStore if available
                 val roleId = "1"
-                val tasks = api.getAssignedTasks(roleId)
-                adapter.updateData(tasks)
+                val envelope = api.getAssignedTasks(roleId)
+                adapter.updateData(envelope.data)
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), e.message ?: "Failed to load tasks", Toast.LENGTH_LONG).show()
             }

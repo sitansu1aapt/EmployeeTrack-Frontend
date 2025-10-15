@@ -13,6 +13,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="blue_500">#2196F3</color>
+    <color name="green_500">#4CAF50</color>
     <color name="background">#F0F2F5</color>
     <color name="success">#2ecc71</color>
     <color name="error">#e74c3c</color>

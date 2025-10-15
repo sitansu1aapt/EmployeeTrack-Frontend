@@ -4,10 +4,11 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Body
+import retrofit2.http.Query
 
 interface TasksApi {
-    @GET("tasks/assigned/{roleId}")
-    suspend fun getAssignedTasks(@Path("roleId") roleId: String): List<AssignedTask>
+    @GET("task-assignments/assigned-to-me/organization")
+    suspend fun getAssignedTasks(@Query("roleId") roleId: String): AssignedTasksEnvelope
 
     @POST("tasks/update-status/{roleId}/{assignmentId}")
     suspend fun updateTaskStatusByAssignee(

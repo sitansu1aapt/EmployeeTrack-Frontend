@@ -87,6 +87,14 @@ class LoginActivity : AppCompatActivity() {
                         }
                     }
 
+                    // Persist simple header fields for Profile
+                    applicationContext.dataStore.edit {
+                        it[PrefKeys.USER_NAME] = resp.user?.id ?: "Employee"
+                        if (!resp.roles.isNullOrEmpty()) {
+                            it[PrefKeys.ACTIVE_ROLE_ID] = resp.roles.first().role_id.toString()
+                            it[PrefKeys.ACTIVE_ROLE_NAME] = resp.roles.first().role_name
+                        }
+                    }
                     Toast.makeText(this@LoginActivity, "Login success", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this@LoginActivity, EmployeeActivity::class.java))
                     finish()

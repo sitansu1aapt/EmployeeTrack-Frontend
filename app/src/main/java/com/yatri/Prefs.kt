@@ -14,6 +14,9 @@ object PrefKeys {
     val ROLES_JSON: Preferences.Key<String> = stringPreferencesKey("roles_json")
     val IS_ON_DUTY: Preferences.Key<Boolean> = booleanPreferencesKey("is_on_duty")
     val ACTIVE_ROLE_ID: Preferences.Key<String> = stringPreferencesKey("active_role_id")
+    val LANGUAGE: Preferences.Key<String> = stringPreferencesKey("language")
+    val USER_NAME: Preferences.Key<String> = stringPreferencesKey("user_name")
+    val ACTIVE_ROLE_NAME: Preferences.Key<String> = stringPreferencesKey("active_role_name")
 }
 
 

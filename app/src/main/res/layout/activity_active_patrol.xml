@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
+    android:padding="16dp"
     android:background="@color/background">
 
     <TextView
@@ -12,8 +13,50 @@
         android:text="Active Patrol Session"
         android:textStyle="bold"
         android:textSize="22sp"
-        android:textColor="@color/blue_500"/>
+        android:textColor="@color/blue_500"
+        android:layout_marginBottom="24dp"/>
 
-    <!-- Add patrol session details and actions here -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp">
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+            
+            <TextView
+                android:id="@+id/tvRouteName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Route Name"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"/>
+            
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Status: IN_PROGRESS"
+                android:textSize="16sp"
+                android:textColor="@color/textLight"/>
+                
+        </LinearLayout>
+        
+    </androidx.cardview.widget.CardView>
+
+    <Button
+        android:id="@+id/btnEndPatrol"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="End Patrol"
+        android:textStyle="bold"
+        android:backgroundTint="@color/blue_500"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="16dp"/>
 
 </LinearLayout>

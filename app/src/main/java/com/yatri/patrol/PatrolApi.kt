@@ -1,6 +1,7 @@
 package com.yatri.patrol
 
 import kotlinx.serialization.Serializable
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -24,13 +25,11 @@ import retrofit2.http.Query
 
 interface PatrolApi {
     @GET("employee/patrol/sessions")
-    suspend fun getEmpSessions(@Query("roleId") roleId: String): Envelope<List<PatrolSession>>
+    suspend fun getEmpSessions(@Query("roleId") roleId: String): Response<Envelope<List<PatrolSession>>>
 
     @POST("employee/patrol/sessions/start")
-    suspend fun startSession(@Query("roleId") roleId: String, @Body body: StartPatrolBody): Envelope<Unit>
+    suspend fun startSession(@Query("roleId") roleId: String, @Body body: StartPatrolBody): Response<Envelope<Unit>>
 
     @POST("employee/patrol/sessions/{id}/end")
-    suspend fun endSession(@Path("id") sessionId: String, @Query("roleId") roleId: String, @Body body: EndPatrolBody): Envelope<Unit>
+    suspend fun endSession(@Path("id") sessionId: String, @Query("roleId") roleId: String, @Body body: EndPatrolBody): Response<Envelope<Unit>>
 }
-
-
