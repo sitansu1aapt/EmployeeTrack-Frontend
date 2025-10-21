@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -59,6 +60,9 @@
             android:turnScreenOn="true"/>
         <activity
             android:name=".PatrolDashboardActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".PatrolStatusActivity"
             android:exported="false"/>
         <activity
             android:name=".attendance.AttendanceHistoryActivity"

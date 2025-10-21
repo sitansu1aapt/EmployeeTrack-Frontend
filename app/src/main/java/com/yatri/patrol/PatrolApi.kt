@@ -23,6 +23,20 @@ import retrofit2.http.Query
 @Serializable data class StartPatrolBody(val routeId: Int)
 @Serializable data class EndPatrolBody(val notes: String?)
 
+@Serializable data class Checkpoint(
+    val patrol_checkpoint_id: String,
+    val checkpoint_name: String
+)
+
+@Serializable data class PatrolStatusResponse(
+    val status: String,
+    val totalCheckpoints: Int,
+    val scannedCheckpointsCount: Int,
+    val remainingCheckpointsCount: Int,
+    val scannedCheckpoints: List<Checkpoint> = emptyList(),
+    val remainingCheckpoints: List<Checkpoint> = emptyList()
+)
+
 interface PatrolApi {
     @GET("employee/patrol/sessions")
     suspend fun getEmpSessions(@Query("roleId") roleId: String): Response<Envelope<List<PatrolSession>>>
@@ -32,4 +46,10 @@ interface PatrolApi {
 
     @POST("employee/patrol/sessions/{id}/end")
     suspend fun endSession(@Path("id") sessionId: String, @Query("roleId") roleId: String, @Body body: EndPatrolBody): Response<Envelope<Unit>>
+
+    @GET("employee/patrol/sessions/{sessionId}/status")
+    suspend fun getPatrolStatus(
+        @Path("sessionId") sessionId: String,
+        @Query("roleId") roleId: String
+    ): Response<Envelope<PatrolStatusResponse>>
 }

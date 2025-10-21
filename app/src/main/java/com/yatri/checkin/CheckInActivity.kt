@@ -59,6 +59,7 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
     private var photoFile: File? = null
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private var hasSelfie: Boolean = false
+    private var isSubmitting: Boolean = false
 
     private val requestCamera = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -135,8 +136,8 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
                 2 -> {
-                    android.util.Log.d("CheckInActivity", "Action: increment step from 2 to 3")
-                    step++
+                    android.util.Log.d("CheckInActivity", "Action: submit() from notes step")
+                    submit()
                 }
                 3 -> {
                     android.util.Log.d("CheckInActivity", "Action: submit()")
@@ -233,8 +234,9 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
         notesStep.visibility = if (step == 2) View.VISIBLE else View.GONE
         findViewById<Button>(R.id.btnPrev).visibility = if (step == 0) View.GONE else View.VISIBLE
         val btnNext = findViewById<Button>(R.id.btnNext)
+        val isCheckoutMode = (intent.getStringExtra("mode") ?: "checkin") == "checkout"
         btnNext.text = when (step) {
-            2 -> "Complete"
+            2 -> if (isCheckoutMode) "Complete Check-out" else "Complete Check-in"
             else -> "Continue"
         }
         btnNext.setTextColor(resources.getColor(android.R.color.white, theme))
@@ -316,8 +318,6 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
         }
         findViewById<ImageView>(R.id.ivSelfiePreview).setImageBitmap(scaled)
-        hasSelfie = true
-        runOnUiThread { renderStep() }
     }
 
     private fun uploadSelfie() {
@@ -326,7 +326,8 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             try {
                 val filesApi = Network.retrofit.create<FilesApi>()
                 val body = file.asRequestBody("image/jpeg".toMediaType())
-                val part = MultipartBody.Part.createFormData("photo", file.name, body)
+                // Backend expects the form-data field name to be "attendanceSelfie"
+                val part = MultipartBody.Part.createFormData("attendanceSelfie", file.name, body)
                 val resp = filesApi.uploadAttendanceSelfie(part)
                 val url = resp.data?.selfie_url
                 if (!url.isNullOrEmpty()) {
@@ -346,12 +347,15 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun submit() {
+        if (isSubmitting) return
+        isSubmitting = true
         val latitude = lat
         val longitude = lng
         val accuracy = acc
         val selfie = selfieUrl
         if (latitude == null || longitude == null || accuracy == null || selfie == null) {
             Toast.makeText(this, "Missing data", Toast.LENGTH_SHORT).show()
+            isSubmitting = false
             return
         }
         val mode = intent.getStringExtra("mode") ?: "checkin"
@@ -380,6 +384,8 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             } catch (e: Exception) {
                 runOnUiThread { Toast.makeText(this@CheckInActivity, e.message ?: "Submit failed", Toast.LENGTH_LONG).show() }
+            } finally {
+                isSubmitting = false
             }
         }
     }

@@ -18,6 +18,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -32,7 +35,8 @@ class LocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForeground(1, notif("Starting"))
+        // Android 14+ requires serviceType=location; ensure notification + immediate foreground
+        startForeground(1, notif("Starting"), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         running = true
         scope.launch { loop() }
     }
@@ -58,7 +62,7 @@ class LocationService : Service() {
     private suspend fun loop() {
         val fused = LocationServices.getFusedLocationProviderClient(this)
         val client = OkHttpClient()
-        var interval = 30000L
+        var interval = 60000L // 1 minute default interval
         while (running) {
             try {
                 val loc = fused.lastLocation.await()
@@ -68,16 +72,26 @@ class LocationService : Service() {
                         put("longitude", loc.longitude)
                         put("accuracy", loc.accuracy)
                     }.toString().toRequestBody("application/json".toMediaType())
-                    val req = Request.Builder()
-                        .url("https://empbackend-862367621556.asia-south1.run.app/api/v1/locations/me/update")
+                    val url = com.yatri.AppConfig.API_BASE_URL + "locations/me/update"
+                    val token = com.yatri.TokenStore.token
+                    android.util.Log.d("LocationService", "POST $url lat=${loc.latitude} lng=${loc.longitude} acc=${loc.accuracy} tokenPrefix=${token?.take(12)}")
+                    val reqBuilder = Request.Builder()
+                        .url(url)
                         .post(body)
-                        .build()
-                    client.newCall(req).execute().use { }
-                    startForeground(1, notif("Last update sent"))
+                    if (!token.isNullOrBlank()) reqBuilder.header("Authorization", "Bearer $token")
+                    val req = reqBuilder.build()
+                    client.newCall(req).execute().use { resp ->
+                        val code = resp.code
+                        val respStr = resp.body?.string().orEmpty()
+                        android.util.Log.d("LocationService", "Response code=$code body=${respStr.take(200)}")
+                    }
+                    val ts = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+                    startForeground(1, notif("Last update ${String.format(Locale.US, "%.0f", loc.accuracy)}m @ $ts"))
                 }
-                interval = 30000L
+                interval = 60000L
             } catch (e: Exception) {
                 interval = (interval * 1.5).toLong().coerceAtMost(120000)
+                android.util.Log.e("LocationService", "Update failed, backing off to ${interval/1000}s", e)
             }
             delay(interval)
         }

@@ -1,22 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Patrol Sessions"
-        android:textStyle="bold"
-        android:textSize="18sp"/>
-
-    <ListView
-        android:id="@+id/listPatrols"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:padding="16dp">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Today's Patrols"
+            android:textStyle="bold"
+            android:textSize="22sp"/>
+
+        <!-- Up Next Section -->
+        <TextView
+            android:id="@+id/sectionPlanned"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Up Next"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginTop="16dp"/>
+        <LinearLayout
+            android:id="@+id/containerPlanned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+        <TextView
+            android:id="@+id/emptyPlanned"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No patrols in this category."
+            android:layout_marginTop="8dp"/>
+
+        <!-- In Progress Section -->
+        <TextView
+            android:id="@+id/sectionInProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="In Progress"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginTop="16dp"/>
+        <LinearLayout
+            android:id="@+id/containerInProgress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+        <TextView
+            android:id="@+id/emptyInProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No patrols in this category."
+            android:layout_marginTop="8dp"/>
+
+        <!-- History Section -->
+        <TextView
+            android:id="@+id/sectionHistory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="History"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginTop="16dp"/>
+        <LinearLayout
+            android:id="@+id/containerHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+        <TextView
+            android:id="@+id/emptyHistory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No patrols in this category."
+            android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
+</ScrollView>
 
 

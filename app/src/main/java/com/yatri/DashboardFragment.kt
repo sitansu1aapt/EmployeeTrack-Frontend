@@ -24,6 +24,9 @@ import okhttp3.MediaType.Companion.toMediaType
 
 class DashboardFragment : Fragment() {
     private val permReq = 2001
+    private lateinit var tvDutyStatus: TextView
+    private lateinit var btnCheckIn: Button
+    private lateinit var btnCheckOut: Button
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_dashboard, container, false)
@@ -31,6 +34,9 @@ class DashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        tvDutyStatus = view.findViewById(R.id.tvDutyStatus)
+        btnCheckIn = view.findViewById(R.id.btnCheckIn)
+        btnCheckOut = view.findViewById(R.id.btnCheckOut)
         view.findViewById<Button>(R.id.btnCheckIn).setOnClickListener {
             startActivity(Intent(requireContext(), com.yatri.checkin.CheckInActivity::class.java).putExtra("mode", "checkin"))
         }
@@ -43,9 +49,23 @@ class DashboardFragment : Fragment() {
         view.findViewById<Button>(R.id.btnPatrols).setOnClickListener {
             startActivity(Intent(requireContext(), PatrolDashboardActivity::class.java))
         }
-        view.findViewById<Switch>(R.id.swBackground).setOnCheckedChangeListener { _, isChecked ->
+        view.findViewById<Switch>(R.id.swBackground).setOnCheckedChangeListener { switchView, isChecked ->
             val ctx = requireContext()
-            if (isChecked) ctx.startService(Intent(ctx, LocationService::class.java)) else ctx.stopService(Intent(ctx, LocationService::class.java))
+            if (isChecked) {
+                val fine = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                val coarse = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                if (!fine || !coarse) {
+                    ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), permReq)
+                    android.widget.Toast.makeText(ctx, "Grant location permission to start tracking", android.widget.Toast.LENGTH_SHORT).show()
+                    switchView.isChecked = false
+                    return@setOnCheckedChangeListener
+                }
+                android.util.Log.d("LocationService", "Starting foreground location service")
+                ctx.startForegroundService(Intent(ctx, LocationService::class.java))
+            } else {
+                android.util.Log.d("LocationService", "Stopping location service")
+                ctx.stopService(Intent(ctx, LocationService::class.java))
+            }
         }
 
         ensureLocationPermission()
@@ -61,6 +81,14 @@ class DashboardFragment : Fragment() {
             centerToLatest(mapFrag, postToServer = true)
         }
         view.post { centerToLatest(mapFrag, postToServer = false) }
+        // Fetch duty status initially
+        fetchDutyStatusAndUpdateUI()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh duty status when returning to dashboard
+        fetchDutyStatusAndUpdateUI()
     }
 
     private fun ensureLocationPermission() {
@@ -125,6 +153,40 @@ class DashboardFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun fetchDutyStatusAndUpdateUI() {
+        // Call /users/is-on-duty and update buttons
+        kotlin.concurrent.thread {
+            try {
+                val url = com.yatri.AppConfig.API_BASE_URL + "users/is-on-duty"
+                val token = com.yatri.TokenStore.token
+                android.util.Log.d("DashboardDuty", "GET $url, tokenPresent=${!token.isNullOrBlank()} tokenPrefix=${token?.take(12)}")
+                val reqBuilder = okhttp3.Request.Builder().url(url)
+                if (!token.isNullOrBlank()) reqBuilder.header("Authorization", "Bearer $token")
+                val req = reqBuilder.build()
+                val client = okhttp3.OkHttpClient()
+                val resp = client.newCall(req).execute()
+                val status = resp.code
+                val body = resp.body?.string().orEmpty()
+                android.util.Log.d("DashboardDuty", "Response status=$status body=${body.take(300)}")
+                val isOnDuty = body.contains("\"is_on_duty\":true")
+                android.util.Log.d("DashboardDuty", "Parsed isOnDuty=$isOnDuty")
+                view?.post { setDutyUI(isOnDuty) }
+            } catch (e: Exception) {
+                android.util.Log.e("DashboardDuty", "Failed to fetch duty status", e)
+                // leave existing state
+            }
+        }
+    }
+
+    private fun setDutyUI(isOnDuty: Boolean) {
+        tvDutyStatus.text = if (isOnDuty) "  On Duty" else "  Off Duty"
+        // Red dot color already set in XML; only toggle buttons
+        btnCheckIn.isEnabled = !isOnDuty
+        btnCheckIn.alpha = if (isOnDuty) 0.5f else 1f
+        btnCheckOut.isEnabled = isOnDuty
+        btnCheckOut.alpha = if (isOnDuty) 1f else 0.5f
     }
 }
 
