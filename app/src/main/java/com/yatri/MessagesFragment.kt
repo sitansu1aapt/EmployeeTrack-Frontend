@@ -9,16 +9,15 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.yatri.messages.NotificationAdapter
-import com.yatri.messages.NotificationItem
+import com.yatri.notifications.Notification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MessagesFragment : Fragment() {
-    private lateinit var adapter: NotificationAdapter
-    private var allNotifications: List<NotificationItem> = emptyList()
+    // private lateinit var adapter: NotificationAdapter // TODO: Implement adapter
+    private var allNotifications: List<Notification> = emptyList()
     private var filterType: String = ""
     private var filterSeen: String = "all"
 
@@ -30,17 +29,17 @@ class MessagesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val rv = view.findViewById<RecyclerView>(R.id.rvNotifications)
         val tvSummary = view.findViewById<TextView>(R.id.tvSummary)
-        adapter = NotificationAdapter(emptyList())
+        // adapter = NotificationAdapter(emptyList())
         rv.layoutManager = LinearLayoutManager(requireContext())
-        rv.adapter = adapter
+        // rv.adapter = adapter
 
         fun updateUI() {
             val filtered = allNotifications.filter {
                 (filterType.isEmpty() || it.type == filterType) &&
-                (filterSeen == "all" || (filterSeen == "unread" && !it.isSeen) || (filterSeen == "read" && it.isSeen))
+                (filterSeen == "all" || (filterSeen == "unread" && !it.is_seen) || (filterSeen == "read" && it.is_seen))
             }
-            adapter.updateData(filtered)
-            val unread = allNotifications.count { !it.isSeen }
+            // adapter.updateData(filtered)
+            val unread = allNotifications.count { !it.is_seen }
             val total = allNotifications.size
             tvSummary.text = "$unread unread • $total total"
         }
@@ -70,18 +69,18 @@ class MessagesFragment : Fragment() {
             updateUI()
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            // TODO: Replace with real API call
-            val notifications = listOf(
-                NotificationItem("1", "Geofence Entry: O-HUB", "Oct 15, 2025 19:11", "FAGURAM MURMU (EmpID: YCPSL-1695) entered site: O-HUB", "GEOFENCE_IN", false),
-                NotificationItem("2", "Geofence Exit: O-HUB", "Oct 15, 2025 18:22", "FAGURAM MURMU (EmpID: YCPSL-1695) exited site: O-HUB", "GEOFENCE_OUT", true),
-                NotificationItem("3", "Absent Notification", "Oct 15, 2025 16:00", "Employee CHIRANJEEV GARU (EmpID: EMP1119) was marked ABSENT on 2025-10-15", "ATTENDANCE", false)
-            )
-            withContext(Dispatchers.Main) {
-                allNotifications = notifications
-                updateUI()
-            }
-        }
+        // CoroutineScope(Dispatchers.IO).launch {
+        //     // TODO: Replace with real API call
+        //     val notifications = listOf(
+        //         NotificationItem("1", "Geofence Entry: O-HUB", "Oct 15, 2025 19:11", "FAGURAM MURMU (EmpID: YCPSL-1695) entered site: O-HUB", "GEOFENCE_IN", false),
+        //         NotificationItem("2", "Geofence Exit: O-HUB", "Oct 15, 2025 18:22", "FAGURAM MURMU (EmpID: YCPSL-1695) exited site: O-HUB", "GEOFENCE_OUT", true),
+        //         NotificationItem("3", "Absent Notification", "Oct 15, 2025 16:00", "Employee CHIRANJEEV GARU (EmpID: EMP1119) was marked ABSENT on 2025-10-15", "ATTENDANCE", false)
+        //     )
+        //     withContext(Dispatchers.Main) {
+        //         allNotifications = notifications
+        //         updateUI()
+        //     }
+        // }
     }
 }
 

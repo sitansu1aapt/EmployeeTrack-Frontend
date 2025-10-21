@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sleep Alert Sound Test"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Checking status..."
+            android:textSize="14sp"
+            android:textColor="@color/text_primary"
+            android:background="@drawable/status_background"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp"
+            android:fontFamily="monospace"/>
+
+        <Button
+            android:id="@+id/btnTestSound"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Test Sleep Alert Sound"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/primary"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnTestNotification"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Test Sleep Alert Notification"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/warning"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnCheckSettings"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Check Audio Settings"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/text_secondary"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Instructions:\n\n1. Test Sound: Plays the sleep alert sound directly\n2. Test Notification: Sends a test notification with sound\n3. Check Settings: Shows current audio volume settings\n\nNote: Make sure your device volume is turned up and notifications are enabled."
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:background="@drawable/instructions_background"
+            android:padding="16dp"
+            android:lineSpacingExtra="4dp"/>
+
+    </LinearLayout>
+
+</ScrollView>
+

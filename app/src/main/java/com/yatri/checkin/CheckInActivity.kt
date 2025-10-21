@@ -6,6 +6,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -28,6 +33,7 @@ import com.yatri.net.Network
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import com.yatri.localization.LocalizationManager
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -70,6 +76,10 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize localization
+        LocalizationManager.initialize(this)
+        
         setContentView(R.layout.activity_checkin_multistep)
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
@@ -110,10 +120,34 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
         renderStep()
 
         val btnTakeSelfie = findViewById<Button>(R.id.btnTakeSelfie)
+        val btnRetakeSelfie = findViewById<Button>(R.id.btnRetakeSelfie)
         val ivSelfiePreview = findViewById<ImageView>(R.id.ivSelfiePreview)
+        val ivCameraIcon = findViewById<ImageView>(R.id.ivCameraIcon)
+        
         btnTakeSelfie.setOnClickListener {
             capturePhoto()
         }
+        
+        btnRetakeSelfie.setOnClickListener {
+            capturePhoto()
+        }
+        
+        // Setup character counter for notes
+        val etNotes = findViewById<EditText>(R.id.etNotes)
+        val tvCharCount = findViewById<TextView>(R.id.tvCharCount)
+        etNotes.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val length = s?.length ?: 0
+                tvCharCount.text = "$length/500"
+                if (length > 500) {
+                    tvCharCount.setTextColor(ContextCompat.getColor(this@CheckInActivity, R.color.error))
+                } else {
+                    tvCharCount.setTextColor(ContextCompat.getColor(this@CheckInActivity, R.color.text_secondary))
+                }
+            }
+        })
 
         val btnNext = findViewById<Button>(R.id.btnNext)
         btnNext.setOnClickListener {
@@ -236,8 +270,8 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
         val btnNext = findViewById<Button>(R.id.btnNext)
         val isCheckoutMode = (intent.getStringExtra("mode") ?: "checkin") == "checkout"
         btnNext.text = when (step) {
-            2 -> if (isCheckoutMode) "Complete Check-out" else "Complete Check-in"
-            else -> "Continue"
+            2 -> if (isCheckoutMode) getString(R.string.complete_checkout) else getString(R.string.complete_checkin)
+            else -> getString(R.string.btn_continue)
         }
         btnNext.setTextColor(resources.getColor(android.R.color.white, theme))
         btnNext.textSize = 16f
@@ -252,13 +286,13 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             val withinGeofence = checkGeofence() // Implement this function to check geofence logic
             geofenceStatus.visibility = View.VISIBLE
             if (withinGeofence) {
-                geofenceStatus.text = "You are within the site boundary"
+                geofenceStatus.text = getString(R.string.you_are_within_site_boundary)
                 geofenceStatus.setTextColor(android.graphics.Color.parseColor("#0F5132"))
                 geofenceStatus.setBackgroundResource(R.drawable.confirmation_box_bg)
                 btnNext.isEnabled = true
-                btnNext.text =  "Continue"
+                btnNext.text = getString(R.string.btn_continue)
             } else {
-                geofenceStatus.text = "You must be within the site boundary to check in"
+                geofenceStatus.text = getString(R.string.verify_location_checkin)
                 geofenceStatus.setTextColor(android.graphics.Color.parseColor("#B71C1C"))
                 geofenceStatus.setBackgroundResource(R.drawable.geofence_status_error)
                 btnNext.isEnabled = false
@@ -317,7 +351,68 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
         FileOutputStream(file).use { out ->
             scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
         }
-        findViewById<ImageView>(R.id.ivSelfiePreview).setImageBitmap(scaled)
+        
+        // Display the captured image in circular format
+        displaySelfie(scaled)
+    }
+
+    private fun displaySelfie(bitmap: Bitmap) {
+        runOnUiThread {
+            val ivSelfiePreview = findViewById<ImageView>(R.id.ivSelfiePreview)
+            val ivCameraIcon = findViewById<ImageView>(R.id.ivCameraIcon)
+            val btnTakeSelfie = findViewById<Button>(R.id.btnTakeSelfie)
+            val btnRetakeSelfie = findViewById<Button>(R.id.btnRetakeSelfie)
+            
+            // Create circular bitmap
+            val circularBitmap = createCircularBitmap(bitmap)
+            ivSelfiePreview.setImageBitmap(circularBitmap)
+            
+            // Hide camera icon and show retake button
+            ivCameraIcon.visibility = View.GONE
+            btnTakeSelfie.visibility = View.GONE
+            btnRetakeSelfie.visibility = View.VISIBLE
+            
+            // Update background to show it's captured
+            ivSelfiePreview.background = getDrawable(R.drawable.circular_image_bg)
+            
+            // Upload the selfie
+            uploadSelfie()
+        }
+    }
+
+    private fun createCircularBitmap(bitmap: Bitmap): Bitmap {
+        val size = minOf(bitmap.width, bitmap.height)
+        val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
+        val paint = Paint().apply {
+            isAntiAlias = true
+        }
+        
+        val radius = size / 2f
+        canvas.drawCircle(radius, radius, radius, paint)
+        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+        
+        val rect = Rect(0, 0, size, size)
+        canvas.drawBitmap(bitmap, rect, rect, paint)
+        
+        return output
+    }
+
+    private fun resetSelfieUI() {
+        val ivSelfiePreview = findViewById<ImageView>(R.id.ivSelfiePreview)
+        val ivCameraIcon = findViewById<ImageView>(R.id.ivCameraIcon)
+        val btnTakeSelfie = findViewById<Button>(R.id.btnTakeSelfie)
+        val btnRetakeSelfie = findViewById<Button>(R.id.btnRetakeSelfie)
+        
+        // Reset to initial state
+        ivSelfiePreview.setImageBitmap(null)
+        ivCameraIcon.visibility = View.VISIBLE
+        btnTakeSelfie.visibility = View.VISIBLE
+        btnRetakeSelfie.visibility = View.GONE
+        ivSelfiePreview.background = getDrawable(R.drawable.circular_image_placeholder)
+        
+        hasSelfie = false
+        selfieUrl = null
     }
 
     private fun uploadSelfie() {
@@ -334,11 +429,15 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                     selfieUrl = url
                     hasSelfie = true
                     runOnUiThread {
-                        Toast.makeText(this@CheckInActivity, "Selfie uploaded", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CheckInActivity, getString(R.string.selfie_uploaded_successfully), Toast.LENGTH_SHORT).show()
                         renderStep()
                     }
                 } else {
-                    runOnUiThread { Toast.makeText(this@CheckInActivity, "Upload failed", Toast.LENGTH_SHORT).show() }
+                    runOnUiThread { 
+                        Toast.makeText(this@CheckInActivity, getString(R.string.selfie_upload_failed), Toast.LENGTH_SHORT).show()
+                        // Reset UI on upload failure
+                        resetSelfieUI()
+                    }
                 }
             } catch (e: Exception) {
                 runOnUiThread { Toast.makeText(this@CheckInActivity, e.message ?: "Upload error", Toast.LENGTH_LONG).show() }

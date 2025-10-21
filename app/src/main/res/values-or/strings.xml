@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ଯାତ୍ରୀ</string>
+    <string name="welcome_back">ସ୍ୱାଗତ</string>
+    <string name="sign_in_to_continue">ଜାରି ରଖିବା ପାଇଁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ</string>
+    <string name="identifier_type">ପରିଚୟକର୍ତ୍ତା ପ୍ରକାର</string>
+    <string name="employee_id">କର୍ମଚାରୀ ID</string>
+    <string name="email">ଇମେଲ୍</string>
+    <string name="phone_number">ଫୋନ୍ ନମ୍ବର</string>
+    <string name="enter_employee_id">କର୍ମଚାରୀ ID ଦିଅନ୍ତୁ</string>
+    <string name="enter_email">ଇମେଲ୍ ଦିଅନ୍ତୁ</string>
+    <string name="enter_phone_number">ଫୋନ୍ ନମ୍ବର ଦିଅନ୍ତୁ</string>
+    <string name="enter_password">ପାସୱାର୍ଡ ଦିଅନ୍ତୁ</string>
+    <string name="password">ପାସୱାର୍ଡ</string>
+    <string name="remember_me">ମୋତେ ସ୍ମରଣ ରଖନ୍ତୁ</string>
+    <string name="forgot_password">ପାସୱାର୍ଡ ଭୁଲିଗଲେ?</string>
+    <string name="login">ଲଗିନ୍</string>
+    <string name="select_identifier_type">ପ୍ରକାର ଚୟନ କରନ୍ତୁ</string>
+    <string name="login_failed">ଲଗିନ୍ ବିଫଳ</string>
+    <string name="invalid_credentials">ଅବୈଧ ID/ଇମେଲ୍/ଫୋନ୍ କିମ୍ବା ପାସୱାର୍ଡ। ଦୟାକରି ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="error_occurred">ଏକ ତ୍ରୁଟି ଘଟିଛି। ଦୟାକରି ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="dashboard">ଡ୍ୟାସବୋର୍ଡ</string>
+    <string name="attendance">ଉପସ୍ଥିତି</string>
+    <string name="check_in">ଚେକ୍ ଇନ୍</string>
+    <string name="tasks">କାର୍ଯ୍ୟ</string>
+    <string name="profile">ପ୍ରୋଫାଇଲ୍</string>
+    <string name="logout">ଲଗଆଉଟ୍</string>
+    <string name="settings">ସେଟିଂସ୍</string>
+    <string name="messages">ସନ୍ଦେଶ</string>
+    <string name="more">ଅଧିକ</string>
+    <string name="home">ହୋମ୍</string>
+    <string name="employees">କର୍ମଚାରୀମାନେ</string>
+    <string name="locations">ସ୍ଥାନସମୂହ</string>
+    <string name="on_duty">କର୍ତ୍ତବ୍ୟରେ</string>
+    <string name="patrol_status">ଗଶ୍ତି ସ୍ଥିତି</string>
+    <string name="active_patrol">ସକ୍ରିୟ ଗଶ୍ତି</string>
+    <string name="question_screen">ପ୍ରଶ୍ନ ସ୍କ୍ରିନ୍</string>
+    <string name="alerts">ସତର୍କତା</string>
+    
+    <!-- Additional strings for check-in process -->
+    <string name="take_selfie_verification">ପରିଚୟ ପାଇଁ ସେଲଫି ନିଅନ୍ତୁ</string>
+    <string name="add_notes_optional">ନୋଟ୍ ଯୋଡନ୍ତୁ (ବୈକଳ୍ପିକ)</string>
+    <string name="notes_hint">ଅତିରିକ୍ତ ସୂଚନା ଅଂଶୀଦାର କରନ୍ତୁ...</string>
+    <string name="complete_checkin">ଚେକ୍-ଇନ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ</string>
+    <string name="complete_checkout">ଚେକ୍-ଆଉଟ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ</string>
+    <string name="btn_continue">ଜାରି ରଖନ୍ତୁ</string>
+    <string name="back">ପଛକୁ</string>
+    <string name="take_selfie">ସେଲଫି ନିଅନ୍ତୁ</string>
+    <string name="retake">ପୁନଃ ନିଅନ୍ତୁ</string>
+    <string name="you_are_within_site_boundary">ଆପଣ ସାଇଟ୍ ସୀମା ମଧ୍ୟରେ ଅଛନ୍ତି</string>
+    <string name="verify_location_checkin">ଚେକ୍-ଇନ୍ କରିବା ପାଇଁ ଆପଣାର ସ୍ଥାନ ଯାଞ୍ଚ କରନ୍ତୁ</string>
+    <string name="selfie_uploaded_successfully">✓ ସେଲଫି ସଫଳତାର ସହିତ ଅପଲୋଡ୍ ହେଲା</string>
+    <string name="selfie_upload_failed">ଅପଲୋଡ୍ ବିଫଳ</string>
+    <string name="please_take_selfie_continue">ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ସେଲଫି ନିଅନ୍ତୁ</string>
+    
+    <!-- Language selection -->
+    <string name="english">ଇଂରାଜୀ</string>
+    <string name="odia">ଓଡ଼ିଆ</string>
+    <string name="select_language">ଭାଷା ଚୟନ କରନ୍ତୁ</string>
+    <string name="language">ଭାଷା</string>
+    
+    <!-- Notification Management -->
+    <string name="notification_message_management">ବିଜ୍ଞପ୍ତି ସନ୍ଦେଶ ପରିଚାଳନା</string>
+    <string name="notification_summary">%1$d ଅପଠିତ • %2$d ସମୁଦାୟ</string>
+    <string name="no_notifications_found">କୌଣସି ବିଜ୍ଞପ୍ତି ମିଳିଲା ନାହିଁ</string>
+    <string name="filter_by_type">ପ୍ରକାର ଅନୁସାରେ ଫିଲ୍ଟର</string>
+    <string name="filter_by_status">ସ୍ଥିତି ଅନୁସାରେ ଫିଲ୍ଟର</string>
+    
+    <!-- Notification Types -->
+    <string name="geofence_entry">ଜିଓଫେନ୍ସ୍ ପ୍ରବେଶ</string>
+    <string name="geofence_exit">ଜିଓଫେନ୍ସ୍ ପ୍ରସ୍ଥାନ</string>
+    <string name="attendance_absent_notification">ଉପସ୍ଥିତି ଅନୁପସ୍ଥିତି ବିଜ୍ଞପ୍ତି</string>
+    <string name="emergency_alert">ଜରୁରୀ ଚେତାବନୀ</string>
+    <string name="message_notification">ସନ୍ଦେଶ</string>
+    
+    <!-- Notification Details -->
+    <string name="geofence_entry_details">ଜିଓଫେନ୍ସ୍ ପ୍ରବେଶ: %1$s</string>
+    <string name="geofence_exit_details">ଜିଓଫେନ୍ସ୍ ପ୍ରସ୍ଥାନ: %1$s</string>
+    <string name="geofence_entry_message">%1$s (ଏମ୍ପି ID: %2$s) ସାଇଟ୍ ପ୍ରବେଶ କଲେ: %3$s</string>
+    <string name="geofence_exit_message">%1$s (ଏମ୍ପି ID: %2$s) ସାଇଟ୍ ଛାଡିଗଲେ: %3$s</string>
+    <string name="absent_notification_message">କର୍ମଚାରୀ %1$s (ଏମ୍ପି ID: %2$s) %3$s ତାରିଖରେ ଅନୁପସ୍ଥିତ ଚିହ୍ନିତ ହେଲେ</string>
+    
+    <!-- Filter Options -->
+    <string name="filter_all">ସମସ୍ତ</string>
+    <string name="filter_emergency_alert">ଜରୁରୀ ଚେତାବନୀ</string>
+    <string name="filter_messages">ସନ୍ଦେଶଗୁଡିକ</string>
+    <string name="filter_unread">ଅପଠିତ</string>
+    <string name="filter_read">ପଠିତ</string>
+    <string name="notification_details">ବିଜ୍ଞପ୍ତି ବିବରଣୀ</string>
+
+    <!-- Quiz strings -->
+    <string name="quiz_question_mount_everest">Which country is Mount Everest located in?</string>
+    <string name="time_left">Time left</string>
+    <string name="quiz_option_nepal">Nepal</string>
+    <string name="quiz_option_india">India</string>
+    <string name="quiz_option_china">China</string>
+    <string name="quiz_option_pakistan">Pakistan</string>
+    <string name="quiz_submit">Submit</string>
+</resources>

@@ -70,6 +70,18 @@
             android:name=".ActivePatrolActivity"
             android:exported="false"/>
         <activity
+            android:name=".NotificationActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".NotificationDetailActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".SleepAlertTestActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".QuizActivity"
+            android:exported="false"/>
+        <activity
             android:name=".attendance.AttendanceHistoryActivity"
             android:exported="false"/>
 

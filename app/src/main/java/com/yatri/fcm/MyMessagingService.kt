@@ -86,17 +86,34 @@ class MyMessagingService : FirebaseMessagingService() {
         // Try to bring UI up immediately if app is foreground
         try { startActivity(intent) } catch (_: Exception) {}
 
+        // Try to get custom sleep alert sound
+        val soundUri = try {
+            val resourceId = resources.getIdentifier("sleep_alert", "raw", packageName)
+            if (resourceId != 0) {
+                Uri.parse("android.resource://$packageName/$resourceId")
+            } else {
+                android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("FCM", "Failed to load custom sleep alert sound: ${e.message}")
+            android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+        }
+
         val notif = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Sleep Alert")
-            .setContentText(message.data["question_text"] ?: "Answer the prompt")
+            .setContentTitle("🚨 SLEEP ALERT 🚨")
+            .setContentText(message.data["question_text"] ?: "IMMEDIATE RESPONSE REQUIRED")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setSound(android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI)
+            .setSound(soundUri)
+            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000))
+            .setLights(Color.RED, 500, 500)
             .setAutoCancel(true)
             .setContentIntent(pi)
             .setFullScreenIntent(pi, true)
-            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setOngoing(true)
+            .setTimeoutAfter(30000) // 30 seconds timeout
             .build()
 
         manager.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notif)
@@ -111,31 +128,49 @@ interface UsersApi { @retrofit2.http.PUT("users/me/fcm-token") suspend fun updat
 
 private fun Context.ensureAlertChannel(nm: NotificationManager): String {
     // Bump channel id to force devices to pick up custom sound changes
-    val channelId = "alerts_v2"
+    val channelId = "alerts_v3"
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        // Clean up older channel without custom sound, if present
+        // Clean up older channels
         try { nm.deleteNotificationChannel("alerts") } catch (_: Exception) {}
+        try { nm.deleteNotificationChannel("alerts_v2") } catch (_: Exception) {}
+        
         val existing = nm.getNotificationChannel(channelId)
         if (existing == null) {
-            val ch = NotificationChannel(channelId, "Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+            // Try to use custom sleep alert sound, fallback to default alarm
+            val soundUri = try {
+                // Check if sleep_alert file exists
+                val resourceId = resources.getIdentifier("sleep_alert", "raw", packageName)
+                if (resourceId != 0) {
+                    Uri.parse("android.resource://$packageName/$resourceId")
+                } else {
+                    android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("FCM", "Failed to load custom sleep alert sound, using default: ${e.message}")
+                android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+            }
+            
+            val ch = NotificationChannel(channelId, "Critical Sleep Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
                 enableLights(true)
                 lightColor = Color.RED
                 enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500, 300, 500, 300, 800)
-                description = "Employee critical alerts"
-                // Use custom sound if present in res/raw (sleep_alert.*). Falls back automatically if missing.
-                val uri: Uri = try {
-                    Uri.parse("android.resource://$packageName/${R.raw.sleep_alert}")
-                } catch (_: Exception) {
-                    android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
-                }
+                vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000)
+                description = "Critical sleep alerts with sound"
+                
                 val attrs = AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_ALARM)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
                     .build()
-                setSound(uri, attrs)
+                
+                setSound(soundUri, attrs)
+                setBypassDnd(true)
+                setShowBadge(true)
             }
             nm.createNotificationChannel(ch)
+            android.util.Log.d("FCM", "Created notification channel: $channelId with sound: $soundUri")
+        } else {
+            android.util.Log.d("FCM", "Notification channel already exists: $channelId")
         }
     }
     return channelId

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/quiz_background"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <!-- Quiz Card -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@android:color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Question -->
+            <TextView
+                android:id="@+id/tvQuestion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/quiz_question_mount_everest"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="24dp"
+                android:lineSpacingExtra="4dp"/>
+
+            <!-- Timer Section with Better Alignment -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <!-- Timer Text -->
+                <TextView
+                    android:id="@+id/tvTimer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/time_left"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginEnd="12dp"/>
+
+                <!-- Circular Progress Bar -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:progressDrawable="@drawable/circular_progress_normal"
+                    android:max="100"
+                    android:progress="100"
+                    android:rotation="-90"/>
+
+            </LinearLayout>
+
+            <!-- Answer Options -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <!-- Option 1 -->
+                <Button
+                    android:id="@+id/btnOption1"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/quiz_option_nepal"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/option_button_bg"
+                    android:layout_marginBottom="12dp"
+                    android:textAllCaps="false"
+                    android:elevation="2dp"/>
+
+                <!-- Option 2 -->
+                <Button
+                    android:id="@+id/btnOption2"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/quiz_option_india"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/option_button_bg"
+                    android:layout_marginBottom="12dp"
+                    android:textAllCaps="false"
+                    android:elevation="2dp"/>
+
+                <!-- Option 3 -->
+                <Button
+                    android:id="@+id/btnOption3"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/quiz_option_china"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/option_button_bg"
+                    android:layout_marginBottom="12dp"
+                    android:textAllCaps="false"
+                    android:elevation="2dp"/>
+
+                <!-- Option 4 -->
+                <Button
+                    android:id="@+id/btnOption4"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/quiz_option_pakistan"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/option_button_bg"
+                    android:textAllCaps="false"
+                    android:elevation="2dp"/>
+
+            </LinearLayout>
+
+            <!-- Submit Button -->
+            <Button
+                android:id="@+id/btnSubmit"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="@string/quiz_submit"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/submit_button_bg"
+                android:textAllCaps="true"
+                android:elevation="4dp"
+                android:enabled="false"
+                android:alpha="0.6"/>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

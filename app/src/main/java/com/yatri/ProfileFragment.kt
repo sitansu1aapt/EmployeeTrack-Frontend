@@ -57,7 +57,11 @@ class ProfileFragment : Fragment() {
         // Logout
         view.findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
             lifecycleScope.launch {
+                // Clear DataStore preferences
                 requireContext().dataStore.edit { it.clear() }
+                // Clear TokenStore
+                TokenStore.token = null
+                android.util.Log.d("ProfileFragment", "User logged out - cleared all data")
                 startActivity(Intent(requireContext(), LoginActivity::class.java))
                 requireActivity().finish()
             }

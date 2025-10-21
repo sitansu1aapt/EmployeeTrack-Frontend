@@ -18,7 +18,7 @@
 
     <color name="background">#FFFFFF</color>
     <color name="primary">#007AFF</color>
-    <color name="success">#34C759</color>
+
     <color name="error">#FF3B30</color>
     <color name="border">#E5E5EA</color>
     <color name="textLight">#7A8A99</color>
@@ -27,4 +27,12 @@
 
     <color name="blue_500">#2196F3</color>
     <color name="gray_500">#9E9E9E</color>
+    
+    <!-- Quiz Colors -->
+    <color name="quiz_background">#424242</color>
+    <color name="option_button_bg">#F5F5F5</color>
+    <color name="option_button_border">#E0E0E0</color>
+    <color name="progress_background">#E0E0E0</color>
+
+    <color name="success">#4CAF50</color>
 </resources>

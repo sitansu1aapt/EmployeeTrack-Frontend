@@ -212,6 +212,8 @@ class TasksFragment : Fragment() {
         android.util.Log.d("TasksFragment", "loadTasks called, fetching tasks for roleId: $roleId")
         progressBar.visibility = View.VISIBLE
         tvEmpty.visibility = View.GONE
+        val noTasksStub = view?.findViewById<ViewGroup?>(R.id.noTasksStub)
+        noTasksStub?.removeAllViews()
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 android.util.Log.d("TasksFragment", "Making API call to get assigned tasks")
@@ -222,6 +224,16 @@ class TasksFragment : Fragment() {
                     adapter.updateData(envelope.data)
                     progressBar.visibility = View.GONE
                     tvEmpty.visibility = if (envelope.data.isEmpty()) View.VISIBLE else View.GONE
+                    val noTasksStub = view?.findViewById<ViewGroup?>(R.id.noTasksStub)
+                    if (envelope.data.isEmpty()) {
+                        // Inflate and show the animated no-tasks view
+                        val inflater = LayoutInflater.from(requireContext())
+                        val noTasksView = inflater.inflate(R.layout.view_no_tasks, noTasksStub, false)
+                        noTasksStub?.removeAllViews()
+                        noTasksStub?.addView(noTasksView)
+                    } else {
+                        noTasksStub?.removeAllViews()
+                    }
                     
                     // Log task statuses for debugging
                     envelope.data.forEach { task ->

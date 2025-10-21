@@ -12,11 +12,35 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
 import android.app.NotificationManager
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import com.yatri.TokenStore
+import com.yatri.PrefKeys
+import com.yatri.localization.LocalizationManager
 
 class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Initialize localization first
+        LocalizationManager.initialize(this)
+        
+        // Load auth token from DataStore if present and set TokenStore.token
+        lifecycleScope.launch {
+            val tok = applicationContext.dataStore.data.first()[PrefKeys.AUTH_TOKEN]
+            if (!tok.isNullOrEmpty()) {
+                TokenStore.token = tok
+                android.util.Log.d("SplashActivity", "Loaded existing token from storage")
+            } else {
+                android.util.Log.d("SplashActivity", "No existing token found")
+            }
+        }
+
         // Samsung UFC workaround - catch and ignore the ClassNotFoundException
         try {
             setContentView(R.layout.activity_splash)
@@ -36,10 +60,22 @@ class SplashActivity : AppCompatActivity() {
 
         ensureNotificationsEnabled()
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-        }, 1500)
+        // Check for existing token and redirect accordingly
+        lifecycleScope.launch {
+            val tok = applicationContext.dataStore.data.first()[PrefKeys.AUTH_TOKEN]
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (!tok.isNullOrEmpty()) {
+                    // Token exists, go directly to main app
+                    android.util.Log.d("SplashActivity", "Token found, redirecting to EmployeeActivity")
+                    startActivity(Intent(this@SplashActivity, EmployeeActivity::class.java))
+                } else {
+                    // No token, go to login
+                    android.util.Log.d("SplashActivity", "No token found, redirecting to LoginActivity")
+                    startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+                }
+                finish()
+            }, 1500)
+        }
     }
 
     private fun ensureNotificationsEnabled() {

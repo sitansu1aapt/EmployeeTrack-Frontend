@@ -56,7 +56,7 @@
             android:backgroundTint="@color/primary"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
-            android:text="Back"
+                    android:text="@string/back"
             android:textAllCaps="true"
             android:textColor="@color/white"
             android:visibility="gone" />
@@ -72,7 +72,7 @@
             android:fontFamily="sans-serif-medium"
             android:gravity="center"
             android:padding="0dp"
-            android:text="Continue"
+                    android:text="@string/btn_continue"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textStyle="bold" />

@@ -59,6 +59,7 @@
                     android:textColor="@color/text_primary"/>
 
                 <TextView
+                    android:id="@+id/tvSignIn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Sign in to continue"
@@ -91,6 +92,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
+                    android:id="@+id/tvIdentifierType"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Identifier Type"

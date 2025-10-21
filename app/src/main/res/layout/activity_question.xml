@@ -11,7 +11,7 @@
         android:layout_gravity="center"
         app:cardCornerRadius="24dp"
         app:cardElevation="8dp"
-        android:backgroundTint="@android:color/transparent"
+        android:backgroundTint="@color/white"
         android:minWidth="320dp">
 
         <LinearLayout
@@ -21,38 +21,52 @@
             android:padding="24dp">
 
 
-        <TextView
-            android:id="@+id/tvQuestion"
+        <!-- Question and Timer in horizontal layout -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:text="Sleep Alert"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="8dp">
-            <com.google.android.material.progressindicator.CircularProgressIndicator
-                android:id="@+id/progressTimer"
+            <!-- Question TextView -->
+            <TextView
+                android:id="@+id/tvQuestion"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="Sleep Alert"
+                android:textColor="@color/text_primary"/>
+
+            <!-- Timer FrameLayout -->
+            <FrameLayout
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:layout_gravity="center"
-                app:indicatorSize="56dp"
-                app:trackThickness="6dp"
-                app:indicatorColor="@color/blue_500"
-                app:trackColor="@color/textLight"
-                android:indeterminate="false" />
-            <TextView
-                android:id="@+id/tvTimer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="13s"
-                android:textColor="@color/textLight"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </FrameLayout>
+                android:layout_marginStart="16dp">
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/progressTimer"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="center"
+                    app:indicatorSize="56dp"
+                    app:trackThickness="6dp"
+                    app:indicatorColor="@color/blue_500"
+                    app:trackColor="@color/textLight"
+                    android:indeterminate="false" />
+                <TextView
+                    android:id="@+id/tvTimer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="13s"
+                    android:textColor="@color/textLight"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/containerOptions"

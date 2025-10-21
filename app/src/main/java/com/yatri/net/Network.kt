@@ -28,6 +28,17 @@ object Network {
                 android.util.Log.d("Network", "Request headers: ${authReq.headers}")
                 chain.proceed(authReq)
             })
+            .addInterceptor(Interceptor { chain ->
+                val response = chain.proceed(chain.request())
+                // Check for 401 Unauthorized response
+                if (response.code == 401) {
+                    android.util.Log.w("Network", "Received 401 Unauthorized - clearing token")
+                    // Clear the token from memory
+                    TokenStore.token = null
+                    // Note: DataStore will be cleared when user manually logs out or app restarts
+                }
+                response
+            })
         }
         .build()
 

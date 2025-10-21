@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import android.widget.CheckBox
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.datastore.preferences.core.edit
@@ -18,8 +19,10 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.POST
+import com.yatri.localization.LocalizationManager
 import retrofit2.http.PUT
 import retrofit2.create
+import java.util.Locale
 import kotlin.coroutines.resume
 
 class LoginActivity : AppCompatActivity() {
@@ -27,12 +30,38 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        // Initialize localization
+        LocalizationManager.initialize(this)
+        
+        val acLanguage = findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.acLanguage)
+        val languageOptions = listOf(getString(R.string.odia), getString(R.string.english))
+        val languageAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, languageOptions)
+        acLanguage.setAdapter(languageAdapter)
+        acLanguage.setText(getString(R.string.select_language), false)
+        acLanguage.setOnItemClickListener { _, _, position, _ ->
+            val langCode = if (position == 0) "or" else "en"
+            LocalizationManager.setLanguage(this, langCode)
+            recreate()
+        }
+
         val acType = findViewById<MaterialAutoCompleteTextView>(R.id.acIdentifierType)
         val etIdentifier = findViewById<EditText>(R.id.etIdentifier)
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
+        val tvWelcome = findViewById<android.widget.TextView>(R.id.tvWelcome)
+        val tvSignIn = findViewById<android.widget.TextView>(R.id.tvSignIn)
+        val cbRemember = findViewById<CheckBox>(R.id.cbRemember)
+        val tvForgot = findViewById<android.widget.TextView>(R.id.tvForgot)
 
-        val typeItems = listOf("Employee ID", "Email", "Phone")
+        tvWelcome.text = getString(R.string.welcome_back)
+        tvSignIn.text = getString(R.string.sign_in_to_continue)
+        // cbRemember doesn't need text setting as it's handled in XML
+        tvForgot.text = getString(R.string.forgot_password)
+        etIdentifier.hint = getString(R.string.enter_employee_id)
+        etPassword.hint = getString(R.string.enter_password)
+        btnLogin.text = getString(R.string.login)
+
+        val typeItems = listOf(getString(R.string.employee_id), getString(R.string.email), getString(R.string.phone_number))
         acType.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, typeItems))
         acType.setText(typeItems.first(), false)
 
