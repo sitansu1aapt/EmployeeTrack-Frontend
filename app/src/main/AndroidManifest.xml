@@ -20,6 +20,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.YatriApp"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
         tools:targetApi="31">
 
         <provider
@@ -63,6 +65,9 @@
             android:exported="false"/>
         <activity
             android:name=".PatrolStatusActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".ActivePatrolActivity"
             android:exported="false"/>
         <activity
             android:name=".attendance.AttendanceHistoryActivity"

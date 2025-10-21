@@ -19,7 +19,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.HttpException
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+// import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import com.google.gson.Gson
@@ -56,13 +56,13 @@ class TasksFragment : Fragment() {
         
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
-        // Initialize Retrofit with detailed logging
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
+        // Initialize Retrofit without logging interceptor for release builds
+        // val loggingInterceptor = HttpLoggingInterceptor().apply {
+        //     level = HttpLoggingInterceptor.Level.BODY
+        // }
         
         val client = OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
+            // .addInterceptor(loggingInterceptor)
             .addInterceptor { chain ->
                 val request = chain.request()
                 android.util.Log.d("TasksFragment", "API Request: ${request.method} ${request.url}")

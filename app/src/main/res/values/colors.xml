@@ -12,8 +12,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="blue_500">#2196F3</color>
-    <color name="green_500">#4CAF50</color>
+
+
+    <color name="red_500">#F44336</color>
+
     <color name="background">#FFFFFF</color>
     <color name="primary">#007AFF</color>
     <color name="success">#34C759</color>
@@ -21,4 +23,8 @@
     <color name="border">#E5E5EA</color>
     <color name="textLight">#7A8A99</color>
     <color name="warning">#f39c12</color>
+    <color name="green_500">#4CAF50</color>
+
+    <color name="blue_500">#2196F3</color>
+    <color name="gray_500">#9E9E9E</color>
 </resources>

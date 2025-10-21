@@ -101,8 +101,14 @@
         <LinearLayout android:id="@+id/listScanned" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/>
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Remaining Checkpoints" android:textStyle="bold" android:layout_marginTop="16dp"/>
-        <LinearLayout android:id="@+id/listRemaining" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/>
+        <LinearLayout
+            android:id="@+id/listRemaining"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:divider="@android:color/transparent"
+            android:showDividers="middle"/>
 
     </LinearLayout>
 </ScrollView>
-

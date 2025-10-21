@@ -16,7 +16,23 @@ import android.app.NotificationManager
 class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_splash)
+        
+        // Samsung UFC workaround - catch and ignore the ClassNotFoundException
+        try {
+            setContentView(R.layout.activity_splash)
+        } catch (e: Exception) {
+            android.util.Log.w("SplashActivity", "Samsung UFC error caught and ignored: ${e.message}")
+            // Fallback: try to continue without the layout
+            try {
+                setContentView(R.layout.activity_splash)
+            } catch (e2: Exception) {
+                android.util.Log.e("SplashActivity", "Failed to set content view even on retry: ${e2.message}")
+                // If all else fails, just finish and start login
+                startActivity(Intent(this, LoginActivity::class.java))
+                finish()
+                return
+            }
+        }
 
         ensureNotificationsEnabled()
 

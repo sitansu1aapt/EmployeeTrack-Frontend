@@ -17,7 +17,21 @@ import retrofit2.create
 class PatrolStatusActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_patrol_status)
+        
+        // Samsung UFC workaround - catch and ignore the ClassNotFoundException
+        try {
+            setContentView(R.layout.activity_patrol_status)
+        } catch (e: Exception) {
+            android.util.Log.w("PatrolStatusActivity", "Samsung UFC error caught and ignored: ${e.message}")
+            // Fallback: try to continue
+            try {
+                setContentView(R.layout.activity_patrol_status)
+            } catch (e2: Exception) {
+                android.util.Log.e("PatrolStatusActivity", "Failed to set content view: ${e2.message}")
+                finish()
+                return
+            }
+        }
 
         val sessionId = intent.getStringExtra("sessionId") ?: return finish()
 
@@ -74,11 +88,17 @@ class PatrolStatusActivity : AppCompatActivity() {
     private fun makeRow(text: String): View {
         val tv = TextView(this)
         tv.text = text
-        tv.textSize = 16f
-        tv.setPadding(16, 16, 16, 16)
+        tv.textSize = 17f
+        tv.setPadding(32, 28, 32, 28)
         tv.background = getDrawable(R.drawable.bg_card)
+        tv.setTextColor(getColor(R.color.text_primary))
+        tv.elevation = 4f
+        tv.setTypeface(tv.typeface, android.graphics.Typeface.BOLD)
         val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        lp.topMargin = 12
+        lp.topMargin = 16
+        lp.bottomMargin = 8
+        lp.marginStart = 4
+        lp.marginEnd = 4
         tv.layoutParams = lp
         return tv
     }

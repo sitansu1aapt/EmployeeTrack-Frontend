@@ -3,7 +3,7 @@ package com.yatri.net
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+// import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.yatri.AppConfig
@@ -14,10 +14,11 @@ object Network {
     private val json = Json { ignoreUnknownKeys = true }
     private val client = OkHttpClient.Builder()
         .apply {
-            if (AppConfig.LOG_HTTP) {
-                val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
-                addInterceptor(logging)
-            }
+            // Commented out logging interceptor for release builds
+            // if (AppConfig.LOG_HTTP) {
+            //     val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+            //     addInterceptor(logging)
+            // }
             addInterceptor(Interceptor { chain ->
                 val req = chain.request()
                 val tok = TokenStore.token

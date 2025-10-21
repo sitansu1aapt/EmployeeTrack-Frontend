@@ -59,4 +59,12 @@
         android:textColor="@android:color/white"
         android:layout_marginBottom="16dp"/>
 
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp" />
+
 </LinearLayout>

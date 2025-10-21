@@ -52,4 +52,11 @@ interface PatrolApi {
         @Path("sessionId") sessionId: String,
         @Query("roleId") roleId: String
     ): Response<Envelope<PatrolStatusResponse>>
+
+    @POST("employee/patrol/sessions/{sessionId}/scan")
+    suspend fun scanCheckpoint(
+        @Path("sessionId") sessionId: String,
+        @Query("roleId") roleId: String,
+        @Body payload: ScanCheckpointPayload
+    ): Response<Envelope<Unit>>
 }

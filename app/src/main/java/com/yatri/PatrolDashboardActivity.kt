@@ -143,7 +143,13 @@ class PatrolDashboardActivity : AppCompatActivity() {
                 btnPrimary.text = "Scan Checkpoint"
                 btnPrimary.setOnClickListener {
                     // Navigate to active patrol scanning
-                    startActivity(Intent(ctx, ActivePatrolActivity::class.java).putExtra("sessionId", s.patrol_session_id))
+                    lifecycleScope.launch {
+                        val prefs = applicationContext.dataStore.data.first()
+                        val roleId = prefs[PrefKeys.ACTIVE_ROLE_ID] ?: ""
+                        startActivity(Intent(ctx, ActivePatrolActivity::class.java)
+                            .putExtra("sessionId", s.patrol_session_id)
+                            .putExtra("roleId", roleId))
+                    }
                 }
                 btnSecondary.visibility = View.VISIBLE
                 btnSecondary.text = "Patrol Status"
