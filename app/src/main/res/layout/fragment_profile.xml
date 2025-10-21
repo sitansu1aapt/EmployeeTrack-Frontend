@@ -63,24 +63,115 @@
                 android:text="Personal Information"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
-            <TextView
-                android:id="@+id/tvEmail"
-                android:layout_width="wrap_content"
+
+            <!-- Email Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="db@gmail.com"
-                android:layout_marginTop="12dp"/>
-            <TextView
-                android:id="@+id/tvDepartment"
-                android:layout_width="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_mail"
+                    android:tint="#5F6C7B"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Email"
+                        android:textColor="#5F6C7B"/>
+                    <TextView
+                        android:id="@+id/tvEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="db@gmail.com"
+                        android:textSize="16sp"
+                        android:textColor="#0F172A"/>
+                </LinearLayout>
+            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="12dp"
+                android:background="#E6E9EF"/>
+
+            <!-- Department Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Not Assigned"
-                android:layout_marginTop="12dp"/>
-            <TextView
-                android:id="@+id/tvOrganization"
-                android:layout_width="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="12dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_dashboard"
+                    android:tint="#5F6C7B"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Department"
+                        android:textColor="#5F6C7B"/>
+                    <TextView
+                        android:id="@+id/tvDepartment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Not Assigned"
+                        android:textSize="16sp"
+                        android:textColor="#0F172A"/>
+                </LinearLayout>
+            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="12dp"
+                android:background="#E6E9EF"/>
+
+            <!-- Organization Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Employee @ OrgID 1"
-                android:layout_marginTop="12dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="12dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_tasks"
+                    android:tint="#5F6C7B"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Organization"
+                        android:textColor="#5F6C7B"/>
+                    <TextView
+                        android:id="@+id/tvOrganization"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Employee @ OrgID 1"
+                        android:textSize="16sp"
+                        android:textColor="#0F172A"/>
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Settings Card -->

@@ -14,9 +14,11 @@
     <color name="white">#FFFFFFFF</color>
     <color name="blue_500">#2196F3</color>
     <color name="green_500">#4CAF50</color>
-    <color name="background">#F0F2F5</color>
-    <color name="success">#2ecc71</color>
-    <color name="error">#e74c3c</color>
+    <color name="background">#FFFFFF</color>
+    <color name="primary">#007AFF</color>
+    <color name="success">#34C759</color>
+    <color name="error">#FF3B30</color>
+    <color name="border">#E5E5EA</color>
     <color name="textLight">#7A8A99</color>
     <color name="warning">#f39c12</color>
 </resources>

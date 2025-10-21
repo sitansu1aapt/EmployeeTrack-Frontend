@@ -47,8 +47,9 @@ class CheckInLocationActivity : AppCompatActivity(), OnMapReadyCallback {
         val api = retrofit.create(SiteAssignmentApi::class.java)
         lifecycleScope.launch {
             try {
-                val assignments = api.getSiteAssignmentsByUserId()
-                if (assignments.isNotEmpty()) {
+                val response = api.getSiteAssignmentsByUserId()
+                val assignments = response.body()?.data
+                if (!assignments.isNullOrEmpty()) {
                     siteAssignment = assignments[0]
                 } else {
                     tvStatus.text = "No site assignment found"

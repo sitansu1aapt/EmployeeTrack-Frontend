@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class TasksAdapter(
-    private var items: List<AssignedTask>,
+    var items: List<AssignedTask>,
     private val onAction: (AssignedTask) -> Unit
 ) : RecyclerView.Adapter<TasksAdapter.TaskViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {

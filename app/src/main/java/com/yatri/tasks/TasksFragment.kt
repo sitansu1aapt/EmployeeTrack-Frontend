@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,6 +15,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.HttpException
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import com.google.gson.Gson
+import java.io.IOException
 
 class TasksFragment : Fragment() {
     private lateinit var adapter: TasksAdapter
@@ -21,6 +31,7 @@ class TasksFragment : Fragment() {
     private lateinit var tvEmpty: TextView
     private lateinit var tasksApi: TasksApi
     private var roleId: String = "EMP800" // TODO: Get from logged-in user
+    private val gson = Gson()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_tasks, container, false)
@@ -31,31 +42,50 @@ class TasksFragment : Fragment() {
         val rv = view.findViewById<RecyclerView>(R.id.rvTasks)
         progressBar = view.findViewById(R.id.progressBar)
         tvEmpty = view.findViewById(R.id.tvEmpty)
+        
+        // Create adapter with explicit debug logging for the button click handler
         adapter = TasksAdapter(emptyList()) { task ->
+            android.util.Log.d("TasksFragment", "*** BUTTON CLICKED - HANDLER TRIGGERED for task: ${task.taskId} ***")
+            android.widget.Toast.makeText(
+                context,
+                "Button clicked - processing action",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
             handleStatusUpdate(task)
         }
+        
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
-        // Create Retrofit with proper JSON converter
-        tasksApi = retrofit2.Retrofit.Builder()
+        // Initialize Retrofit with detailed logging
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        
+        val client = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor { chain ->
+                val request = chain.request()
+                android.util.Log.d("TasksFragment", "API Request: ${request.method} ${request.url}")
+                val response = chain.proceed(request)
+                android.util.Log.d("TasksFragment", "API Response: ${response.code}")
+                response
+            }
+            .build()
+            
+        tasksApi = Retrofit.Builder()
             .baseUrl(com.yatri.AppConfig.API_BASE_URL)
-            .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
-            .client(okhttp3.OkHttpClient.Builder()
-                .addInterceptor { chain ->
-                    val request = chain.request()
-                    android.util.Log.d("TasksFragment", "API Request: ${request.method} ${request.url}")
-                    val response = chain.proceed(request)
-                    android.util.Log.d("TasksFragment", "API Response: ${response.code}")
-                    response
-                }
-                .build())
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
             .build()
             .create(TasksApi::class.java)
+        android.util.Log.d("TasksFragment", "Retrofit initialized with logging interceptor")
         loadTasks()
     }
     
     private fun handleStatusUpdate(task: AssignedTask) {
+        android.util.Log.d("TasksFragment", "=== API CALL DEBUGGING ===")
         android.util.Log.d("TasksFragment", "handleStatusUpdate called for task: ${task.taskId}, current status: ${task.taskStatus}")
+        android.util.Log.d("TasksFragment", "Task details: assignmentId=${task.assignmentId}, title=${task.taskTitle}")
         
         val newStatus = when (task.taskStatus) {
             "ASSIGNED" -> "IN_PROGRESS"
@@ -66,29 +96,113 @@ class TasksFragment : Fragment() {
             }
         }
         
+        android.util.Log.d("TasksFragment", "Will update status to: $newStatus")
+        
+        // Show immediate feedback to user
+        val feedbackMessage = when (newStatus) {
+            "IN_PROGRESS" -> "Starting task..."
+            "VERIFICATION_PENDING" -> "Requesting completion..."
+            else -> "Updating task status..."
+        }
+        
+        android.widget.Toast.makeText(
+            context,
+            feedbackMessage,
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
+        
         android.util.Log.d("TasksFragment", "Updating task status to: $newStatus")
         progressBar.visibility = View.VISIBLE
+        
+        // Create a copy of the task with updated status for immediate UI update
+        val updatedTask = task.copy(taskStatus = newStatus)
+        val currentTasks = (adapter.items as? List<AssignedTask>) ?: emptyList()
+        val updatedTasks = currentTasks.map { 
+            if (it.assignmentId == task.assignmentId) updatedTask else it 
+        }
+        
+        // Update UI immediately
+        adapter.updateData(updatedTasks)
+        
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                val requestBody = mapOf("task_status" to newStatus)
                 android.util.Log.d("TasksFragment", "Making API call with roleId: $roleId, assignmentId: ${task.assignmentId}")
-                tasksApi.updateTaskStatusByAssignee(
-                    roleId,
-                    task.assignmentId,
-                    mapOf("status" to newStatus)
-                )
+                android.util.Log.d("TasksFragment", "Request body: ${gson.toJson(requestBody)}")
+                
+                // Log the full URL that will be called
+                val baseUrl = com.yatri.AppConfig.API_BASE_URL
+                val endpoint = "task-assignments/${task.assignmentId}/status/assignee?roleId=$roleId"
+                android.util.Log.d("TasksFragment", "Full API URL: $baseUrl$endpoint")
+                
+                // Force a delay to ensure logs are visible
+                android.util.Log.d("TasksFragment", "About to execute API call...")
+                
+                // Execute the API call with explicit try/catch
+                try {
+                    val result = tasksApi.updateTaskStatusByAssignee(
+                        roleId,
+                        task.assignmentId,
+                        requestBody
+                    )
+                    android.util.Log.d("TasksFragment", "API call executed successfully")
+                } catch (e: Exception) {
+                    android.util.Log.e("TasksFragment", "Inner exception during API call: ${e.javaClass.simpleName}: ${e.message}")
+                    throw e
+                }
                 android.util.Log.d("TasksFragment", "API call successful, reloading tasks")
-                // Reload tasks after successful update
-                loadTasks()
-            } catch (e: Exception) {
-                android.util.Log.e("TasksFragment", "Error updating task status", e)
+                
                 withContext(Dispatchers.Main) {
-                    progressBar.visibility = View.GONE
-                    // Show error message to user
+                    val successMessage = when (newStatus) {
+                        "IN_PROGRESS" -> "Task started successfully"
+                        "VERIFICATION_PENDING" -> "Completion request sent"
+                        else -> "Task updated successfully!"
+                    }
+                    
                     android.widget.Toast.makeText(
                         context,
-                        "Failed to update task: ${e.message}",
+                        successMessage,
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                
+                // Reload tasks to get the updated list from the server
+                loadTasks()
+            } catch (e: Exception) {
+                // Enhanced error logging
+                android.util.Log.e("TasksFragment", "Error updating task status: ${e.message}", e)
+                android.util.Log.e("TasksFragment", "Error type: ${e.javaClass.simpleName}")
+                
+                if (e is retrofit2.HttpException) {
+                    try {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        android.util.Log.e("TasksFragment", "HTTP Error code: ${e.code()}")
+                        android.util.Log.e("TasksFragment", "Error response body: $errorBody")
+                    } catch (ex: Exception) {
+                        android.util.Log.e("TasksFragment", "Failed to parse error body: ${ex.message}")
+                    }
+                } else if (e is java.io.IOException) {
+                    android.util.Log.e("TasksFragment", "Network error (possible timeout or no connection)")
+                }
+                
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    
+                    // Show more descriptive error message to user
+                    val errorMessage = when (e) {
+                        is retrofit2.HttpException -> "Server error (${e.code()}). Please try again."
+                        is java.io.IOException -> "Network error. Please check your connection."
+                        else -> "Failed to update task status: ${e.message}"
+                    }
+                    
+                    android.widget.Toast.makeText(
+                        context,
+                        errorMessage,
                         android.widget.Toast.LENGTH_LONG
                     ).show()
+                    
+                    // Reload original tasks
+                    loadTasks()
                 }
             }
         }
@@ -115,13 +229,34 @@ class TasksFragment : Fragment() {
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("TasksFragment", "Error loading tasks", e)
+                android.util.Log.e("TasksFragment", "Error loading tasks: ${e.message}", e)
+                android.util.Log.e("TasksFragment", "Error type: ${e.javaClass.simpleName}")
+                
+                if (e is retrofit2.HttpException) {
+                    try {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        android.util.Log.e("TasksFragment", "HTTP Error code: ${e.code()}")
+                        android.util.Log.e("TasksFragment", "Error response body: $errorBody")
+                    } catch (ex: Exception) {
+                        android.util.Log.e("TasksFragment", "Failed to parse error body: ${ex.message}")
+                    }
+                } else if (e is java.io.IOException) {
+                    android.util.Log.e("TasksFragment", "Network error (possible timeout or no connection)")
+                }
+                
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     tvEmpty.visibility = View.VISIBLE
+                    
+                    val errorMessage = when (e) {
+                        is retrofit2.HttpException -> "Server error (${e.code()}). Please try again."
+                        is java.io.IOException -> "Network error. Please check your connection."
+                        else -> "Failed to load tasks: ${e.message}"
+                    }
+                    
                     android.widget.Toast.makeText(
                         context,
-                        "Failed to load tasks: ${e.message}",
+                        errorMessage,
                         android.widget.Toast.LENGTH_LONG
                     ).show()
                 }

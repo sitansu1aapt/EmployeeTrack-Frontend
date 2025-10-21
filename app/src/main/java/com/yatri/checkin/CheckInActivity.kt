@@ -13,6 +13,7 @@ import android.provider.MediaStore
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,7 +39,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class CheckInActivity : AppCompatActivity() {
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolygonOptions
+
+class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
+    private lateinit var map: GoogleMap
+    private var geofencePolygon: List<LatLng> = listOf()
+    private var userLatLng: LatLng? = null
     private var step = 0
     private var lat: Double? = null
     private var lng: Double? = null
@@ -46,6 +58,7 @@ class CheckInActivity : AppCompatActivity() {
     private var selfieUrl: String? = null
     private var photoFile: File? = null
     private val scope = CoroutineScope(Dispatchers.Main + Job())
+    private var hasSelfie: Boolean = false
 
     private val requestCamera = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -56,17 +69,82 @@ class CheckInActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_checkin)
+        setContentView(R.layout.activity_checkin_multistep)
 
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+
+        // Fetch site assignment and location from API
+        val retrofit = com.yatri.net.Network.retrofit
+        val api = retrofit.create(com.yatri.checkin.SiteAssignmentApi::class.java)
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+            try {
+                val response = api.getSiteAssignmentsByUserId()
+                val assignments = response.body()?.data
+                val status = response.body()?.status
+                android.util.Log.d("CheckInActivity", "API status: $status, assignments: $assignments")
+                if (status == "success" && !assignments.isNullOrEmpty()) {
+                    val assignment = assignments[0]
+                    geofencePolygon = assignment.geofenceShapeData.coordinates.map { com.google.android.gms.maps.model.LatLng(it.lat, it.lng) }
+                    android.util.Log.d("CheckInActivity", "Geofence polygon: ${assignment.geofenceShapeData.coordinates}")
+                } else {
+                    android.util.Log.e("CheckInActivity", "No site assignments found or invalid response")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CheckInActivity", "Error fetching site assignments", e)
+            }
+            // Fetch user location
+            val client = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(this@CheckInActivity)
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this@CheckInActivity, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                client.lastLocation.addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        userLatLng = com.google.android.gms.maps.model.LatLng(loc.latitude, loc.longitude)
+                        renderStep()
+                        updateGeofenceUI()
+                        mapFragment.getMapAsync(this@CheckInActivity)
+                    }
+                }
+            }
+        }
         renderStep()
 
-        findViewById<Button>(R.id.btnNext).setOnClickListener {
-            when (step) {
-                0 -> fetchLocation()
-                1 -> capturePhoto()
-                2 -> step++
-                3 -> submit()
+        val btnTakeSelfie = findViewById<Button>(R.id.btnTakeSelfie)
+        val ivSelfiePreview = findViewById<ImageView>(R.id.ivSelfiePreview)
+        btnTakeSelfie.setOnClickListener {
+            capturePhoto()
+        }
+
+        val btnNext = findViewById<Button>(R.id.btnNext)
+        btnNext.setOnClickListener {
+            android.util.Log.i("CheckInActivity", "btnNext clicked: step=$step enabled=${it.isEnabled} visibility=${it.visibility}")
+            if (!it.isEnabled) {
+                android.util.Log.w("CheckInActivity", "btnNext click ignored because isEnabled=false")
+                return@setOnClickListener
             }
+            when (step) {
+                0 -> {
+                    android.util.Log.d("CheckInActivity", "Action: fetchLocation()")
+                    fetchLocation()
+                }
+                1 -> {
+                    if (hasSelfie) {
+                        android.util.Log.d("CheckInActivity", "Proceeding from selfie step to notes")
+                        step++
+                    } else {
+                        Toast.makeText(this, "Please take a selfie to continue", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                2 -> {
+                    android.util.Log.d("CheckInActivity", "Action: increment step from 2 to 3")
+                    step++
+                }
+                3 -> {
+                    android.util.Log.d("CheckInActivity", "Action: submit()")
+                    submit()
+                }
+                else -> android.util.Log.w("CheckInActivity", "Unexpected step=$step")
+            }
+            android.util.Log.i("CheckInActivity", "After click handled -> step=$step")
             renderStep()
         }
 
@@ -76,19 +154,116 @@ class CheckInActivity : AppCompatActivity() {
         }
     }
 
-    private fun renderStep() {
-        findViewById<TextView>(R.id.tvStep).text = when (step) {
-            0 -> "Step 1: Location"
-            1 -> "Step 2: Selfie"
-            2 -> "Step 3: Notes"
-            else -> "Step 4: Confirm"
+    private fun checkGeofence(): Boolean {
+        // Use ray-casting algorithm
+        val user = userLatLng ?: return false
+        if (geofencePolygon.size < 3) return false
+        var intersectCount = 0
+        for (j in geofencePolygon.indices) {
+            val k = (j + 1) % geofencePolygon.size
+            val a = geofencePolygon[j]
+            val b = geofencePolygon[k]
+            if (((a.latitude > user.latitude) != (b.latitude > user.latitude)) &&
+                (user.longitude < (b.longitude - a.longitude) * (user.latitude - a.latitude) / (b.latitude - a.latitude) + a.longitude)
+            ) {
+                intersectCount++
+            }
         }
+        return (intersectCount % 2 == 1)
+    }
 
-        findViewById<TextView>(R.id.tvStatus).text = when (step) {
-            0 -> "Get current location"
-            1 -> if (selfieUrl == null) "Capture and upload selfie" else "Selfie uploaded"
-            2 -> "Add optional notes"
-            else -> "Review and submit"
+    override fun onMapReady(googleMap: GoogleMap) {
+        map = googleMap
+        // Draw marker
+        userLatLng?.let { userLoc ->
+            map.addMarker(MarkerOptions().position(userLoc).title("You"))
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(userLoc, 16f))
+        }
+        // Draw polygon
+        if (geofencePolygon.isNotEmpty()) {
+            map.addPolygon(
+                PolygonOptions()
+                    .addAll(geofencePolygon)
+                    .strokeColor(ContextCompat.getColor(this, R.color.primary))
+                    .fillColor(ContextCompat.getColor(this, R.color.primary) and 0x33FFFFFF)
+                    .strokeWidth(3f)
+            )
+        }
+        updateGeofenceUI()
+    }
+
+    private fun updateGeofenceUI() {
+        val inside = checkGeofence()
+        // Update status box and button here as in your renderStep()
+        val geofenceStatus = findViewById<TextView>(R.id.tvGeofenceStatus)
+        val btnNext = findViewById<Button>(R.id.btnNext)
+        btnNext.alpha = 1.0f
+        geofenceStatus.visibility = View.VISIBLE
+        if (inside) {
+            geofenceStatus.text = "You are within the site boundary"
+            geofenceStatus.setTextColor(android.graphics.Color.parseColor("#0F5132"))
+            geofenceStatus.setBackgroundResource(R.drawable.confirmation_box_bg)
+            btnNext.isEnabled = true
+        } else {
+            geofenceStatus.text = "You must be within the site boundary to check in"
+            geofenceStatus.setTextColor(android.graphics.Color.parseColor("#B71C1C"))
+            geofenceStatus.setBackgroundResource(R.drawable.geofence_status_error)
+            btnNext.isEnabled = false
+        }
+    }
+
+    private fun renderStep() {
+        val stepDots: List<View> = listOf(
+            findViewById(R.id.stepDot0),
+            findViewById(R.id.stepDot1),
+            findViewById(R.id.stepDot2)
+        )
+        for (i in stepDots.indices) {
+            when {
+                i < step -> stepDots[i].setBackgroundResource(R.drawable.step_dot_completed)
+                i == step -> stepDots[i].setBackgroundResource(R.drawable.step_dot_active)
+                else -> stepDots[i].setBackgroundResource(R.drawable.step_dot_inactive)
+            }
+        }
+        val locationStep = findViewById<android.widget.LinearLayout>(R.id.locationStepContent)
+        val selfieStep = findViewById<android.widget.LinearLayout>(R.id.selfieStepContent)
+        val notesStep = findViewById<android.widget.LinearLayout>(R.id.notesStepContent)
+        locationStep.visibility = if (step == 0) View.VISIBLE else View.GONE
+        selfieStep.visibility = if (step == 1) View.VISIBLE else View.GONE
+        notesStep.visibility = if (step == 2) View.VISIBLE else View.GONE
+        findViewById<Button>(R.id.btnPrev).visibility = if (step == 0) View.GONE else View.VISIBLE
+        val btnNext = findViewById<Button>(R.id.btnNext)
+        btnNext.text = when (step) {
+            2 -> "Complete"
+            else -> "Continue"
+        }
+        btnNext.setTextColor(resources.getColor(android.R.color.white, theme))
+        btnNext.textSize = 16f
+        btnNext.isAllCaps = false
+        // Use default typeface or Typeface.DEFAULT_BOLD for bold text
+        btnNext.setTypeface(android.graphics.Typeface.DEFAULT_BOLD)
+        // Keep the button fully opaque always; only toggle isEnabled
+        btnNext.alpha = 1.0f
+        // Geofence status styling
+        val geofenceStatus = findViewById<TextView>(R.id.tvGeofenceStatus)
+        if (step == 0) {
+            val withinGeofence = checkGeofence() // Implement this function to check geofence logic
+            geofenceStatus.visibility = View.VISIBLE
+            if (withinGeofence) {
+                geofenceStatus.text = "You are within the site boundary"
+                geofenceStatus.setTextColor(android.graphics.Color.parseColor("#0F5132"))
+                geofenceStatus.setBackgroundResource(R.drawable.confirmation_box_bg)
+                btnNext.isEnabled = true
+                btnNext.text =  "Continue"
+            } else {
+                geofenceStatus.text = "You must be within the site boundary to check in"
+                geofenceStatus.setTextColor(android.graphics.Color.parseColor("#B71C1C"))
+                geofenceStatus.setBackgroundResource(R.drawable.geofence_status_error)
+                btnNext.isEnabled = false
+            }
+        } else {
+            // Enable Continue on selfie step only after selfie is captured/uploaded
+            btnNext.isEnabled = if (step == 1) hasSelfie else true
         }
     }
 
@@ -140,7 +315,9 @@ class CheckInActivity : AppCompatActivity() {
         FileOutputStream(file).use { out ->
             scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
         }
-        findViewById<ImageView>(R.id.ivSelfie).setImageBitmap(scaled)
+        findViewById<ImageView>(R.id.ivSelfiePreview).setImageBitmap(scaled)
+        hasSelfie = true
+        runOnUiThread { renderStep() }
     }
 
     private fun uploadSelfie() {
@@ -154,9 +331,11 @@ class CheckInActivity : AppCompatActivity() {
                 val url = resp.data?.selfie_url
                 if (!url.isNullOrEmpty()) {
                     selfieUrl = url
-                    runOnUiThread { Toast.makeText(this@CheckInActivity, "Selfie uploaded", Toast.LENGTH_SHORT).show() }
-                    step++
-                    runOnUiThread { renderStep() }
+                    hasSelfie = true
+                    runOnUiThread {
+                        Toast.makeText(this@CheckInActivity, "Selfie uploaded", Toast.LENGTH_SHORT).show()
+                        renderStep()
+                    }
                 } else {
                     runOnUiThread { Toast.makeText(this@CheckInActivity, "Upload failed", Toast.LENGTH_SHORT).show() }
                 }
