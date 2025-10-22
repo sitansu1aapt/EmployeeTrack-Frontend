@@ -30,6 +30,9 @@ class TasksFragment : Fragment() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvEmpty: TextView
     private lateinit var tasksApi: TasksApi
+    private lateinit var spinnerFilter: android.widget.Spinner
+    private lateinit var spinnerSort: android.widget.Spinner
+    private var allTasks: List<AssignedTask> = emptyList()
     private var roleId: String = "EMP800" // TODO: Get from logged-in user
     private val gson = Gson()
 
@@ -42,20 +45,38 @@ class TasksFragment : Fragment() {
         val rv = view.findViewById<RecyclerView>(R.id.rvTasks)
         progressBar = view.findViewById(R.id.progressBar)
         tvEmpty = view.findViewById(R.id.tvEmpty)
-        
-        // Create adapter with explicit debug logging for the button click handler
+        spinnerFilter = view.findViewById(R.id.spinnerFilter)
+        spinnerSort = view.findViewById(R.id.spinnerSort)
+
         adapter = TasksAdapter(emptyList()) { task ->
-            android.util.Log.d("TasksFragment", "*** BUTTON CLICKED - HANDLER TRIGGERED for task: ${task.taskId} ***")
-            android.widget.Toast.makeText(
-                context,
-                "Button clicked - processing action",
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
+            android.util.Log.d("TasksFragment", "=== BUTTON CLICKED ===")
+            android.util.Log.d("TasksFragment", "Task clicked: ${task.taskTitle}, Status: ${task.taskStatus}")
             handleStatusUpdate(task)
         }
-        
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
+
+        // Setup filter spinner
+        val filterOptions = arrayOf("All", "ASSIGNED", "IN_PROGRESS", "VERIFICATION_PENDING", "COMPLETED", "HIGH", "MEDIUM", "LOW")
+        spinnerFilter.adapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, filterOptions)
+        spinnerFilter.setSelection(0)
+        spinnerFilter.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>, view: View?, position: Int, id: Long) {
+                updateFilteredSortedTasks()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>) {}
+        }
+
+        // Setup sort spinner
+        val sortOptions = arrayOf("Due Date", "Priority")
+        spinnerSort.adapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, sortOptions)
+        spinnerSort.setSelection(0)
+        spinnerSort.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>, view: View?, position: Int, id: Long) {
+                updateFilteredSortedTasks()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>) {}
+        }
         // Initialize Retrofit without logging interceptor for release builds
         // val loggingInterceptor = HttpLoggingInterceptor().apply {
         //     level = HttpLoggingInterceptor.Level.BODY
@@ -64,9 +85,19 @@ class TasksFragment : Fragment() {
         val client = OkHttpClient.Builder()
             // .addInterceptor(loggingInterceptor)
             .addInterceptor { chain ->
-                val request = chain.request()
-                android.util.Log.d("TasksFragment", "API Request: ${request.method} ${request.url}")
-                val response = chain.proceed(request)
+                val req = chain.request()
+                val tok = com.yatri.TokenStore.token
+                android.util.Log.d("TasksFragment", "API Request: ${req.method} ${req.url}")
+                android.util.Log.d("TasksFragment", "Using token: ${if (tok.isNullOrBlank()) "NO TOKEN" else "Token exists"}")
+                
+                // Add authentication header if token exists
+                val authReq = if (!tok.isNullOrBlank()) {
+                    req.newBuilder().addHeader("Authorization", "Bearer $tok").build()
+                } else {
+                    req
+                }
+                
+                val response = chain.proceed(authReq)
                 android.util.Log.d("TasksFragment", "API Response: ${response.code}")
                 response
             }
@@ -90,18 +121,19 @@ class TasksFragment : Fragment() {
         val newStatus = when (task.taskStatus) {
             "ASSIGNED" -> "IN_PROGRESS"
             "IN_PROGRESS" -> "VERIFICATION_PENDING"
+            "VERIFICATION_PENDING" -> "COMPLETED"
             else -> {
                 android.util.Log.e("TasksFragment", "Invalid task status for update: ${task.taskStatus}")
                 return
             }
         }
-        
         android.util.Log.d("TasksFragment", "Will update status to: $newStatus")
         
         // Show immediate feedback to user
         val feedbackMessage = when (newStatus) {
             "IN_PROGRESS" -> "Starting task..."
             "VERIFICATION_PENDING" -> "Requesting completion..."
+            "COMPLETED" -> "Task marked as completed!"
             else -> "Updating task status..."
         }
         
@@ -120,7 +152,6 @@ class TasksFragment : Fragment() {
         val updatedTasks = currentTasks.map { 
             if (it.assignmentId == task.assignmentId) updatedTask else it 
         }
-        
         // Update UI immediately
         adapter.updateData(updatedTasks)
         
@@ -156,9 +187,9 @@ class TasksFragment : Fragment() {
                     val successMessage = when (newStatus) {
                         "IN_PROGRESS" -> "Task started successfully"
                         "VERIFICATION_PENDING" -> "Completion request sent"
+                        "COMPLETED" -> "Task marked as completed!"
                         else -> "Task updated successfully!"
                     }
-                    
                     android.widget.Toast.makeText(
                         context,
                         successMessage,
@@ -216,17 +247,14 @@ class TasksFragment : Fragment() {
         noTasksStub?.removeAllViews()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                android.util.Log.d("TasksFragment", "Making API call to get assigned tasks")
                 val envelope = tasksApi.getAssignedTasks(roleId)
-                android.util.Log.d("TasksFragment", "Received ${envelope.data.size} tasks from API")
-                
                 withContext(Dispatchers.Main) {
-                    adapter.updateData(envelope.data)
+                    allTasks = envelope.data
+                    updateFilteredSortedTasks()
                     progressBar.visibility = View.GONE
                     tvEmpty.visibility = if (envelope.data.isEmpty()) View.VISIBLE else View.GONE
                     val noTasksStub = view?.findViewById<ViewGroup?>(R.id.noTasksStub)
                     if (envelope.data.isEmpty()) {
-                        // Inflate and show the animated no-tasks view
                         val inflater = LayoutInflater.from(requireContext())
                         val noTasksView = inflater.inflate(R.layout.view_no_tasks, noTasksStub, false)
                         noTasksStub?.removeAllViews()
@@ -234,45 +262,44 @@ class TasksFragment : Fragment() {
                     } else {
                         noTasksStub?.removeAllViews()
                     }
-                    
-                    // Log task statuses for debugging
-                    envelope.data.forEach { task ->
-                        android.util.Log.d("TasksFragment", "Task ${task.taskId}: status=${task.taskStatus}, title=${task.taskTitle}")
-                    }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("TasksFragment", "Error loading tasks: ${e.message}", e)
-                android.util.Log.e("TasksFragment", "Error type: ${e.javaClass.simpleName}")
-                
-                if (e is retrofit2.HttpException) {
-                    try {
-                        val errorBody = e.response()?.errorBody()?.string()
-                        android.util.Log.e("TasksFragment", "HTTP Error code: ${e.code()}")
-                        android.util.Log.e("TasksFragment", "Error response body: $errorBody")
-                    } catch (ex: Exception) {
-                        android.util.Log.e("TasksFragment", "Failed to parse error body: ${ex.message}")
-                    }
-                } else if (e is java.io.IOException) {
-                    android.util.Log.e("TasksFragment", "Network error (possible timeout or no connection)")
-                }
-                
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     tvEmpty.visibility = View.VISIBLE
-                    
-                    val errorMessage = when (e) {
-                        is retrofit2.HttpException -> "Server error (${e.code()}). Please try again."
-                        is java.io.IOException -> "Network error. Please check your connection."
-                        else -> "Failed to load tasks: ${e.message}"
-                    }
-                    
                     android.widget.Toast.makeText(
                         context,
-                        errorMessage,
+                        "Failed to load tasks: ${e.message}",
                         android.widget.Toast.LENGTH_LONG
                     ).show()
                 }
             }
+        }
+    }
+
+    private fun updateFilteredSortedTasks() {
+        var filtered = allTasks
+        val filterValue = spinnerFilter.selectedItem?.toString() ?: "All"
+        if (filterValue != "All") {
+            filtered = filtered.filter {
+                it.taskStatus == filterValue || it.taskPriority.equals(filterValue, ignoreCase = true)
+            }
+        }
+        val sortValue = spinnerSort.selectedItem?.toString() ?: "Due Date"
+        filtered = when (sortValue) {
+            "Due Date" -> filtered.sortedBy { it.taskDueDate }
+            "Priority" -> filtered.sortedBy { priorityOrder(it.taskPriority) }
+            else -> filtered
+        }
+        adapter.updateData(filtered)
+    }
+
+    private fun priorityOrder(priority: String): Int {
+        return when (priority.uppercase()) {
+            "HIGH" -> 1
+            "MEDIUM" -> 2
+            "LOW" -> 3
+            else -> 4
         }
     }
 }

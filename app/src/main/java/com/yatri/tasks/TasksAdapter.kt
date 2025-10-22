@@ -30,6 +30,9 @@ class TasksAdapter(
     }
     class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(task: AssignedTask, onAction: (AssignedTask) -> Unit) {
+            android.util.Log.d("TasksAdapter", "=== BINDING TASK ===")
+            android.util.Log.d("TasksAdapter", "Task: ${task.taskTitle}, Status: ${task.taskStatus}")
+            
             val tvTitle = itemView.findViewById<TextView>(R.id.tvTaskTitle)
             val tvDesc = itemView.findViewById<TextView>(R.id.tvTaskDescription)
             val tvPriority = itemView.findViewById<TextView>(R.id.tvPriority)
@@ -38,44 +41,73 @@ class TasksAdapter(
             val tvAssignedByEmail = itemView.findViewById<TextView>(R.id.tvAssignedByEmail)
             val tvStatus = itemView.findViewById<TextView>(R.id.tvStatus)
             val btnAction = itemView.findViewById<Button>(R.id.btnAction)
-            
+            val attachmentSection = itemView.findViewById<View>(R.id.attachmentSection)
+            val tvAttachmentName = itemView.findViewById<TextView>(R.id.tvAttachmentName)
+
             tvTitle.text = task.taskTitle
             tvDesc.text = task.taskDescription
-            tvPriority.text = task.taskPriority
             tvDueDate.text = "Due: ${task.taskDueDate}"
             tvAssignedBy.text = "Assigned by: ${task.assignedByName}"
             tvAssignedByEmail.text = task.assignedByEmail
             tvStatus.text = task.taskStatus
-            
+
+            // Priority badge color
+            tvPriority.text = task.taskPriority
+            when (task.taskPriority.uppercase()) {
+                "HIGH" -> tvPriority.setBackgroundResource(R.drawable.bg_priority_high)
+                "MEDIUM" -> tvPriority.setBackgroundResource(R.drawable.bg_priority_medium)
+                "LOW" -> tvPriority.setBackgroundResource(R.drawable.bg_priority_low)
+                else -> tvPriority.setBackgroundResource(R.drawable.bg_priority_high)
+            }
+
+            // File attachment section
+            if (!task.attachmentUrl.isNullOrEmpty()) {
+                attachmentSection.visibility = View.VISIBLE
+                tvAttachmentName.setOnClickListener {
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                    intent.data = android.net.Uri.parse(task.attachmentUrl)
+                    intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    try {
+                        itemView.context.startActivity(intent)
+                    } catch (e: Exception) {
+                        android.widget.Toast.makeText(
+                            itemView.context,
+                            "Unable to open attachment.",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } else {
+                attachmentSection.visibility = View.GONE
+            }
+
             // Set button visibility and text based on task status
             when (task.taskStatus) {
                 "ASSIGNED" -> {
                     btnAction.visibility = View.VISIBLE
                     btnAction.text = "START TASK"
                     btnAction.setBackgroundResource(R.drawable.bg_button_blue)
-                    android.util.Log.d("TasksAdapter", "Set START TASK button visible for task: ${task.taskId}")
                 }
                 "IN_PROGRESS" -> {
                     btnAction.visibility = View.VISIBLE
                     btnAction.text = "Request Completion"
                     btnAction.setBackgroundResource(R.drawable.bg_button_green)
-                    android.util.Log.d("TasksAdapter", "Set Request Completion button visible for task: ${task.taskId}")
+                }
+                "VERIFICATION_PENDING" -> {
+                    btnAction.visibility = View.VISIBLE
+                    btnAction.text = "Mark Completed"
+                    btnAction.setBackgroundResource(R.drawable.bg_button_green)
                 }
                 else -> {
                     btnAction.visibility = View.GONE
-                    android.util.Log.d("TasksAdapter", "Button hidden for task: ${task.taskId} with status: ${task.taskStatus}")
                 }
             }
-            
-            // Set click listener for the action button
+
             btnAction.setOnClickListener {
-                android.util.Log.d("TasksAdapter", "Button clicked for task: ${task.taskId}, status: ${task.taskStatus}")
-                android.widget.Toast.makeText(
-                    itemView.context,
-                    "Processing task action: ${task.taskStatus}",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
+                android.util.Log.d("TasksAdapter", "Button clicked for task: ${task.taskTitle}, Status: ${task.taskStatus}")
+                android.util.Log.d("TasksAdapter", "Calling onAction callback...")
                 onAction(task)
+                android.util.Log.d("TasksAdapter", "onAction callback completed")
             }
         }
     }
