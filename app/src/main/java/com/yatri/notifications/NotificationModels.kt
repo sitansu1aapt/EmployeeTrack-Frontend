@@ -9,7 +9,7 @@ data class Notification(
     val details: String,
     val type: String,
     val target_user_id: String,
-    val subject_user_id: String,
+    val subject_user_id: String? = null,
     val is_seen: Boolean,
     val created_at: String,
     val seen_at: String? = null,

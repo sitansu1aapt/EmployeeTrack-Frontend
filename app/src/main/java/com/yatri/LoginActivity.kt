@@ -66,8 +66,8 @@ class LoginActivity : AppCompatActivity() {
         acType.setText(typeItems.first(), false)
 
         // Set default values for Employee ID and Password
-        etIdentifier.setText("EMP800")
-        etPassword.setText("Pass1234")
+        etIdentifier.setText("EMP1118")
+        etPassword.setText("Password123")
 
         val authApi = Network.retrofit.create<AuthApi>()
         val usersApi = Network.retrofit.create<UsersApi>()
@@ -118,7 +118,11 @@ class LoginActivity : AppCompatActivity() {
 
                     // Persist simple header fields for Profile
                     applicationContext.dataStore.edit {
-                        it[PrefKeys.USER_NAME] = resp.user?.id ?: "Employee"
+                        val displayName = resp.user?.full_name
+                            ?: resp.user?.email
+                            ?: resp.user?.id
+                            ?: "Employee"
+                        it[PrefKeys.USER_NAME] = displayName
                         if (!resp.roles.isNullOrEmpty()) {
                             it[PrefKeys.ACTIVE_ROLE_ID] = resp.roles.first().role_id.toString()
                             it[PrefKeys.ACTIVE_ROLE_NAME] = resp.roles.first().role_name
@@ -166,7 +170,11 @@ data class TokenDTO(val authToken: String)
 data class RoleDTO(val role_id: Int, val role_name: String)
 
 @Serializable
-data class UserDTO(val id: String? = null)
+data class UserDTO(
+    val id: String? = null,
+    val full_name: String? = null,
+    val email: String? = null
+)
 
 @Serializable
 data class LoginResponse(val token: TokenDTO? = null, val roles: List<RoleDTO> = emptyList(), val user: UserDTO? = null)

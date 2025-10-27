@@ -174,7 +174,9 @@ class PatrolDashboardActivity : AppCompatActivity() {
                 val api = Network.retrofit.create<PatrolApi>()
                 // RN sends routeId: parse from session if present, or fallback
                 val routeId = s.patrol_session_id.filter { it.isDigit() }.toIntOrNull() ?: 0
+                Log.d(TAG, "Start Patrol API - roleId: $roleId, routeId: $routeId, sessionId: ${s.patrol_session_id}")
                 val response = api.startSession(roleId ?: "", StartPatrolBody(routeId))
+                Log.d(TAG, "Start Patrol API response: ${response.raw()} body: ${response.body()} code: ${response.code()}")
                 
                 if (response.isSuccessful) {
                     val env = response.body()
@@ -192,7 +194,7 @@ class PatrolDashboardActivity : AppCompatActivity() {
                             Toast.makeText(this@PatrolDashboardActivity, "Authentication required. Please log in again.", Toast.LENGTH_LONG).show()
                         }
                         else -> {
-                            Log.e(TAG, "Failed to start patrol. Error code: ${response.code()}")
+                            Log.e(TAG, "Failed to start patrol. Error code: ${response.code()} body: ${response.errorBody()?.string()}")
                             Toast.makeText(this@PatrolDashboardActivity, "Failed to start patrol. Error code: ${response.code()}", Toast.LENGTH_LONG).show()
                         }
                     }

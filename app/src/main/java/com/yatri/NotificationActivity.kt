@@ -72,7 +72,7 @@ class NotificationActivity : AppCompatActivity() {
     }
     
     private fun setupRecyclerView() {
-        adapter = NotificationAdapter { notification ->
+        adapter = NotificationAdapter(notifications) { notification ->
             onNotificationClick(notification)
         }
         rvNotifications.layoutManager = LinearLayoutManager(this)
@@ -188,11 +188,11 @@ class NotificationActivity : AppCompatActivity() {
             try {
                 val api = Network.retrofit.create<NotificationApi>()
                 val response = api.getNotifications(
-                    userRole = activeRoleId,
-                    type = currentFilters.type,
-                    isSeen = currentFilters.is_seen,
-                    limit = currentFilters.limit,
-                    offset = currentFilters.offset
+                    activeRoleId,
+                    currentFilters.type,
+                    currentFilters.is_seen,
+                    currentFilters.limit,
+                    currentFilters.offset
                 )
                 
                 if (response.isSuccessful) {
@@ -239,7 +239,7 @@ class NotificationActivity : AppCompatActivity() {
             }
         }
         
-        adapter.updateNotifications(notifications)
+        adapter.updateData(notifications)
         updateEmptyState()
     }
     
@@ -308,139 +308,4 @@ class NotificationActivity : AppCompatActivity() {
     }
 }
 
-class NotificationAdapter(
-    private val onItemClick: (Notification) -> Unit
-) : RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder>() {
-    
-    private val notifications = mutableListOf<Notification>()
-    
-    fun updateNotifications(newNotifications: List<Notification>) {
-        notifications.clear()
-        notifications.addAll(newNotifications)
-        notifyDataSetChanged()
-    }
-    
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NotificationViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_notification, parent, false)
-        return NotificationViewHolder(view)
-    }
-    
-    override fun onBindViewHolder(holder: NotificationViewHolder, position: Int) {
-        holder.bind(notifications[position])
-    }
-    
-    override fun getItemCount(): Int = notifications.size
-    
-    inner class NotificationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val ivIcon: ImageView = itemView.findViewById(R.id.ivIcon)
-        private val tvTitle: TextView = itemView.findViewById(R.id.tvTitle)
-        private val tvDetails: TextView = itemView.findViewById(R.id.tvDetails)
-        private val tvTimestamp: TextView = itemView.findViewById(R.id.tvTimestamp)
-        private val tvContent: TextView = itemView.findViewById(R.id.tvContent)
-        private val ivUnreadIndicator: View = itemView.findViewById(R.id.ivUnreadIndicator)
-        
-        fun bind(notification: Notification) {
-            // Set icon based on notification type
-            setNotificationIcon(notification.type)
-            
-            // Set title and color based on type
-            tvTitle.text = getNotificationTitle(notification.type, notification)
-            setTitleColor(notification.type)
-            
-            // Set details
-            tvDetails.text = getNotificationDetails(notification)
-            
-            // Set timestamp
-            tvTimestamp.text = formatTimestamp(notification.created_at)
-            
-            // Set content
-            tvContent.text = getNotificationContent(notification)
-            
-            // Set unread indicator
-            ivUnreadIndicator.visibility = if (notification.is_seen) View.GONE else View.VISIBLE
-            
-            // Set click listener
-            itemView.setOnClickListener {
-                onItemClick(notification)
-            }
-        }
-        
-        private fun setNotificationIcon(type: String) {
-            val iconRes = when (type) {
-                "GEOFENCE_IN" -> R.drawable.ic_geofence_entry
-                "GEOFENCE_OUT" -> R.drawable.ic_geofence_exit
-                "ABSENT_NOTIFICATION" -> R.drawable.ic_absent_notification
-                "EMERGENCY_NOTIFICATION" -> R.drawable.ic_emergency_alert
-                "MESSAGE_NOTIFICATION" -> R.drawable.ic_message_notification
-                else -> R.drawable.ic_notification_default
-            }
-            ivIcon.setImageResource(iconRes)
-        }
-        
-        private fun getNotificationTitle(type: String, notification: Notification): String {
-            return when (type) {
-                "GEOFENCE_IN" -> itemView.context.getString(R.string.geofence_entry)
-                "GEOFENCE_OUT" -> itemView.context.getString(R.string.geofence_exit)
-                "ABSENT_NOTIFICATION" -> itemView.context.getString(R.string.attendance_absent_notification)
-                "EMERGENCY_NOTIFICATION" -> itemView.context.getString(R.string.emergency_alert)
-                "MESSAGE_NOTIFICATION" -> itemView.context.getString(R.string.message_notification)
-                else -> notification.title
-            }
-        }
-        
-        private fun setTitleColor(type: String) {
-            val colorRes = when (type) {
-                "GEOFENCE_IN" -> R.color.success
-                "GEOFENCE_OUT" -> R.color.warning
-                "ABSENT_NOTIFICATION" -> R.color.text_secondary
-                "EMERGENCY_NOTIFICATION" -> R.color.error
-                else -> R.color.text_primary
-            }
-            tvTitle.setTextColor(itemView.context.resources.getColor(colorRes))
-        }
-        
-        private fun getNotificationDetails(notification: Notification): String {
-            return when (notification.type) {
-                "GEOFENCE_IN" -> itemView.context.getString(R.string.geofence_entry_details, notification.metadata?.site_name ?: "")
-                "GEOFENCE_OUT" -> itemView.context.getString(R.string.geofence_exit_details, notification.metadata?.site_name ?: "")
-                else -> notification.details
-            }
-        }
-        
-        private fun getNotificationContent(notification: Notification): String {
-            return when (notification.type) {
-                "GEOFENCE_IN" -> itemView.context.getString(
-                    R.string.geofence_entry_message,
-                    notification.metadata?.user_name ?: "",
-                    notification.metadata?.empid ?: "",
-                    notification.metadata?.site_name ?: ""
-                )
-                "GEOFENCE_OUT" -> itemView.context.getString(
-                    R.string.geofence_exit_message,
-                    notification.metadata?.user_name ?: "",
-                    notification.metadata?.empid ?: "",
-                    notification.metadata?.site_name ?: ""
-                )
-                "ABSENT_NOTIFICATION" -> itemView.context.getString(
-                    R.string.absent_notification_message,
-                    notification.metadata?.user_name ?: "",
-                    notification.metadata?.empid ?: "",
-                    notification.created_at.substring(0, 10) // Extract date
-                )
-                else -> notification.details
-            }
-        }
-        
-        private fun formatTimestamp(timestamp: String): String {
-            return try {
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-                val date = inputFormat.parse(timestamp)
-                outputFormat.format(date)
-            } catch (e: Exception) {
-                timestamp
-            }
-        }
-    }
-}
+// Duplicate NotificationAdapter removed to resolve type mismatch error with MessagesFragment.kt

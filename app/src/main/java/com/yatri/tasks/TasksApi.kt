@@ -12,8 +12,8 @@ interface TasksApi {
 
     @PUT("task-assignments/{assignmentId}/status/assignee")
     suspend fun updateTaskStatusByAssignee(
-        @Query("roleId") roleId: String,
         @Path("assignmentId") assignmentId: String,
+        @Query("roleId") roleId: String,
         @Body status: Map<String, String>
     )
 }

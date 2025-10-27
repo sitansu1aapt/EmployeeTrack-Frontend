@@ -76,6 +76,7 @@ class TasksAdapter(
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
                 onAction(task)
+                android.util.Log.d("TasksAdapter-onAction", "onAction called")
             }
         }
     }

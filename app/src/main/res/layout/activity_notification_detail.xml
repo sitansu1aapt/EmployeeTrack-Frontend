@@ -1,113 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    android:background="@color/white">
+    android:background="@color/background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <androidx.cardview.widget.CardView
+        <TextView
+            android:id="@+id/tvDetailTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="@android:color/white">
+            android:text="Notification Title"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+        <TextView
+            android:id="@+id/tvDetailType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Type: MESSAGE_NOTIFICATION"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
 
-                <TextView
-                    android:id="@+id/tvTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Notification Title"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="8dp"/>
+        <TextView
+            android:id="@+id/tvDetailStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Status: Unread"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
 
-                <TextView
-                    android:id="@+id/tvDetails"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Notification Details"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginBottom="12dp"/>
+        <TextView
+            android:id="@+id/tvDetailTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Created: Oct 15, 2025 19:11"
+            android:textColor="@color/text_tertiary"
+            android:textSize="12sp"
+            android:layout_marginBottom="16dp" />
 
-                <TextView
-                    android:id="@+id/tvContent"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Notification Content"
-                    android:textSize="16sp"
-                    android:textColor="@color/text_primary"
-                    android:lineSpacingExtra="4dp"
-                    android:layout_marginBottom="16dp"/>
+        <TextView
+            android:id="@+id/tvDetailContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notification content details..."
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="16dp" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Type: "
-                        android:textStyle="bold"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_secondary"/>
-
-                    <TextView
-                        android:id="@+id/tvType"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="GEOFENCE_IN"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_primary"
-                        android:layout_marginEnd="16dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Status: "
-                        android:textStyle="bold"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_secondary"/>
-
-                    <TextView
-                        android:id="@+id/tvStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Unread"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_primary"/>
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvTimestamp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Oct 15, 2025 19:11"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginTop="8dp"
-                    android:gravity="end"/>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
+        <TextView
+            android:id="@+id/tvDetailMetadata"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Additional Info:"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
 
     </LinearLayout>
 

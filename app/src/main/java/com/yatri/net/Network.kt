@@ -23,8 +23,15 @@ object Network {
                 val req = chain.request()
                 val tok = TokenStore.token
                 android.util.Log.d("Network", "Using token: $tok")
-                if (tok.isNullOrBlank()) return@Interceptor chain.proceed(req)
-                val authReq = req.newBuilder().addHeader("Authorization", "Bearer $tok").build()
+                if (tok.isNullOrBlank()) {
+                    android.util.Log.e("Network", "NO TOKEN: Not adding Authorization header!")
+                    return@Interceptor chain.proceed(req)
+                }
+                val authReq = req.newBuilder()
+                    .addHeader("Authorization", "Bearer $tok")
+                    .addHeader("Accept", "application/json")
+                    .addHeader("Content-Type", "application/json")
+                    .build()
                 android.util.Log.d("Network", "Request headers: ${authReq.headers}")
                 chain.proceed(authReq)
             })

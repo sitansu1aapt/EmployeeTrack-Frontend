@@ -1,3 +1,6 @@
+// This file is intentionally left empty to avoid duplicate TasksFragment definition.
+// Use com.yatri.tasks.TasksFragment instead for all references.
+
 package com.yatri
 
 import android.os.Bundle

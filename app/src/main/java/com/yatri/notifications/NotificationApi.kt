@@ -1,5 +1,6 @@
 package com.yatri.notifications
 
+import kotlinx.serialization.Serializable
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -13,16 +14,19 @@ interface NotificationApi {
         @Query("offset") offset: Int = 0
     ): Response<NotificationListResponse>
 
+    @Serializable
+    data class SimpleResponse(val status: String? = null, val message: String? = null)
+
     @PUT("notifications/{notificationId}/seen")
     suspend fun markNotificationAsSeen(
         @Path("notificationId") notificationId: String
-    ): Response<Map<String, Any>>
+    ): Response<SimpleResponse>
 
     @PUT("notifications/seen-all")
-    suspend fun markAllNotificationsAsSeen(): Response<Map<String, Any>>
+    suspend fun markAllNotificationsAsSeen(): Response<SimpleResponse>
 
     @DELETE("notifications/{notificationId}")
     suspend fun deleteNotification(
         @Path("notificationId") notificationId: String
-    ): Response<Map<String, Any>>
+    ): Response<SimpleResponse>
 }
