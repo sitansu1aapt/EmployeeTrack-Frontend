@@ -11,10 +11,11 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("/Users/sitansujena/Documents/projects/2024/Aatp/Yatri/Admin/Yatri-frontend/yatriApp/android/app/my-release-key.jks")
-            storePassword = "yatri2025#"
-            keyAlias = "my-key-alias"
-            keyPassword = "yatri2025#"
+            // Comment out signing for now to avoid build errors
+            // storeFile = file("/Users/sitansujena/Documents/projects/2024/Aatp/Yatri/Admin/Yatri-frontend/yatriApp/android/app/my-release-key.jks")
+            // storePassword = "yatri2025#"
+            // keyAlias = "my-key-alias"
+            // keyPassword = "yatri2025#"
         }
     }
 
@@ -38,7 +39,8 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+            // Comment out signing for now
+            // signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

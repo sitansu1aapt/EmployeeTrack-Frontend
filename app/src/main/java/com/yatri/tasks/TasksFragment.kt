@@ -83,18 +83,19 @@ class TasksFragment : Fragment() {
         val newStatus = when (task.taskStatus) {
             "ASSIGNED" -> "IN_PROGRESS"
             "IN_PROGRESS" -> "VERIFICATION_PENDING"
+            "VERIFICATION_PENDING" -> "COMPLETED"
             else -> {
                 android.util.Log.e("TasksFragment", "Invalid task status for update: ${task.taskStatus}")
                 return
             }
         }
-
         android.util.Log.d("TasksFragment", "Will update status to: $newStatus")
 
         // Show immediate feedback to user
         val feedbackMessage = when (newStatus) {
             "IN_PROGRESS" -> "Starting task..."
             "VERIFICATION_PENDING" -> "Requesting completion..."
+            "COMPLETED" -> "Task marked as completed!"
             else -> "Updating task status..."
         }
 
@@ -113,7 +114,6 @@ class TasksFragment : Fragment() {
         val updatedTasks = currentTasks.map {
             if (it.assignmentId == task.assignmentId) updatedTask else it
         }
-
         // Update UI immediately
         adapter.updateData(updatedTasks)
 
@@ -150,9 +150,9 @@ class TasksFragment : Fragment() {
                     val successMessage = when (newStatus) {
                         "IN_PROGRESS" -> "Task started successfully"
                         "VERIFICATION_PENDING" -> "Completion request sent"
+                        "COMPLETED" -> "Task marked as completed!"
                         else -> "Task updated successfully!"
                     }
-
                     android.widget.Toast.makeText(
                         context,
                         successMessage,
@@ -215,12 +215,12 @@ class TasksFragment : Fragment() {
                 android.util.Log.d("TasksFragment", "Received ${envelope.data.size} tasks from API")
                 
                 withContext(Dispatchers.Main) {
-                    adapter.updateData(envelope.data)
+                    allTasks = envelope.data
+                    updateFilteredSortedTasks()
                     progressBar.visibility = View.GONE
                     tvEmpty.visibility = if (envelope.data.isEmpty()) View.VISIBLE else View.GONE
                     val noTasksStub = view?.findViewById<ViewGroup?>(R.id.noTasksStub)
                     if (envelope.data.isEmpty()) {
-                        // Inflate and show the animated no-tasks view
                         val inflater = LayoutInflater.from(requireContext())
                         val noTasksView = inflater.inflate(R.layout.view_no_tasks, noTasksStub, false)
                         noTasksStub?.removeAllViews()
@@ -228,45 +228,44 @@ class TasksFragment : Fragment() {
                     } else {
                         noTasksStub?.removeAllViews()
                     }
-                    
-                    // Log task statuses for debugging
-                    envelope.data.forEach { task ->
-                        android.util.Log.d("TasksFragment", "Task ${task.taskId}: status=${task.taskStatus}, title=${task.taskTitle}")
-                    }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("TasksFragment", "Error loading tasks: ${e.message}", e)
-                android.util.Log.e("TasksFragment", "Error type: ${e.javaClass.simpleName}")
-                
-                if (e is retrofit2.HttpException) {
-                    try {
-                        val errorBody = e.response()?.errorBody()?.string()
-                        android.util.Log.e("TasksFragment", "HTTP Error code: ${e.code()}")
-                        android.util.Log.e("TasksFragment", "Error response body: $errorBody")
-                    } catch (ex: Exception) {
-                        android.util.Log.e("TasksFragment", "Failed to parse error body: ${ex.message}")
-                    }
-                } else if (e is java.io.IOException) {
-                    android.util.Log.e("TasksFragment", "Network error (possible timeout or no connection)")
-                }
-                
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     tvEmpty.visibility = View.VISIBLE
-                    
-                    val errorMessage = when (e) {
-                        is retrofit2.HttpException -> "Server error (${e.code()}). Please try again."
-                        is java.io.IOException -> "Network error. Please check your connection."
-                        else -> "Failed to load tasks: ${e.message}"
-                    }
-                    
                     android.widget.Toast.makeText(
                         context,
-                        errorMessage,
+                        "Failed to load tasks: ${e.message}",
                         android.widget.Toast.LENGTH_LONG
                     ).show()
                 }
             }
+        }
+    }
+
+    private fun updateFilteredSortedTasks() {
+        var filtered = allTasks
+        val filterValue = spinnerFilter.selectedItem?.toString() ?: "All"
+        if (filterValue != "All") {
+            filtered = filtered.filter {
+                it.taskStatus == filterValue || it.taskPriority.equals(filterValue, ignoreCase = true)
+            }
+        }
+        val sortValue = spinnerSort.selectedItem?.toString() ?: "Due Date"
+        filtered = when (sortValue) {
+            "Due Date" -> filtered.sortedBy { it.taskDueDate }
+            "Priority" -> filtered.sortedBy { priorityOrder(it.taskPriority) }
+            else -> filtered
+        }
+        adapter.updateData(filtered)
+    }
+
+    private fun priorityOrder(priority: String): Int {
+        return when (priority.uppercase()) {
+            "HIGH" -> 1
+            "MEDIUM" -> 2
+            "LOW" -> 3
+            else -> 4
         }
     }
 }

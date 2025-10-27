@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipeRefreshLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <LinearLayout
@@ -72,25 +76,51 @@
                     android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:background="#E74C3C"/>
-                <TextView
-                    android:id="@+id/tvDutyStatus"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="  Off Duty"
-                    android:textStyle="bold"
-                    android:textSize="16sp"/>
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvDutyStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="  Off Duty"
+                        android:textStyle="bold"
+                        android:textSize="16sp"/>
+                    <TextView
+                        android:id="@+id/tvDutyTimer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="  00:00:00"
+                        android:textSize="14sp"
+                        android:textColor="#4CAF50"
+                        android:visibility="gone"/>
+                </LinearLayout>
 
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="1dp"
                     android:layout_weight="1"/>
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Real-Time Tracking"
-                    android:textSize="14sp"
-                    android:layout_marginEnd="8dp"/>
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Real-Time Tracking"
+                        android:textSize="14sp"
+                        android:layout_marginEnd="8dp"/>
+                    <TextView
+                        android:id="@+id/tvBackgroundStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Inactive"
+                        android:textSize="12sp"
+                        android:textColor="#E74C3C"
+                        android:layout_marginEnd="8dp"/>
+                </LinearLayout>
                 <Switch
                     android:id="@+id/swBackground"
                     android:layout_width="wrap_content"
@@ -139,6 +169,99 @@
                 app:cornerRadius="24dp"
                 android:textColor="@android:color/white"
                 android:layout_marginTop="12dp"/>
+
+            <!-- Quick Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEmergency"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Emergency"
+                    android:icon="@android:drawable/ic_dialog_alert"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:backgroundTint="#E74C3C"
+                    app:cornerRadius="24dp"
+                    android:textColor="@android:color/white" />
+                <Space
+                    android:layout_width="12dp"
+                    android:layout_height="1dp"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnReportIssue"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Report Issue"
+                    android:icon="@android:drawable/ic_menu_report_image"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:backgroundTint="#FF9800"
+                    app:cornerRadius="24dp"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Role Switching and Language Selector -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:elevation="2dp"
+            android:padding="16dp"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Settings"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Active Role:"
+                    android:textSize="14sp"/>
+                <Button
+                    android:id="@+id/btnSwitchRole"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Employee"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Language:"
+                    android:textSize="14sp"/>
+                <Button
+                    android:id="@+id/btnSwitchLanguage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="English"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:textSize="12sp"/>
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -220,5 +343,6 @@
 
     </LinearLayout>
 </ScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 
