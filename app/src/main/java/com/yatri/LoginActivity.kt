@@ -96,24 +96,53 @@ class LoginActivity : AppCompatActivity() {
                         password = password
                     )
 
+                    // Log login request details
+                    val loginUrl = "${AppConfig.API_BASE_URL}auth/login"
+                    android.util.Log.d("LoginActivity", "=== LOGIN API REQUEST ===")
+                    android.util.Log.d("LoginActivity", "URL: $loginUrl")
+                    android.util.Log.d("LoginActivity", "Method: POST")
+                    android.util.Log.d("LoginActivity", "Organization ID: ${request.organizationId}")
+                    android.util.Log.d("LoginActivity", "Identifier Type: ${request.identifierType}")
+                    android.util.Log.d("LoginActivity", "Identifier: $identifier")
+                    android.util.Log.d("LoginActivity", "Password: ${"*".repeat(password.length)}")
+                    
                     val env = authApi.login(request)
+                    
+                    // Log login response details
+                    android.util.Log.d("LoginActivity", "=== LOGIN API RESPONSE ===")
+                    android.util.Log.d("LoginActivity", "Status: ${env.status}")
+                    android.util.Log.d("LoginActivity", "Message: ${env.message}")
+                    android.util.Log.d("LoginActivity", "Data: ${env.data}")
+                    android.util.Log.d("LoginActivity", "Token: ${env.data?.token?.authToken?.take(30)}...")
+                    android.util.Log.d("LoginActivity", "User: ${env.data?.user}")
+                    android.util.Log.d("LoginActivity", "Roles: ${env.data?.roles}")
                     if (env.status != null && env.status != "success") {
                         error(env.message ?: "Login failed")
                     }
                     val resp = env.data ?: error(env.message ?: "Invalid login response")
                     val token = resp.token?.authToken ?: error("Invalid login response")
 
-                    saveAuth(token)
+                    // IMPORTANT: Set TokenStore.token FIRST before any API calls
                     TokenStore.token = token
+                    android.util.Log.d("LoginActivity", "Token set in TokenStore: ${token.take(20)}...")
+                    
+                    // Save token to DataStore
+                    saveAuth(token)
 
+                    // Now update FCM token - this API call will use the token from TokenStore
                     val fcm = getFcmTokenOrNull()
                     if (!fcm.isNullOrEmpty()) {
+                        val fcmUrl = "${AppConfig.API_BASE_URL}users/me/fcm-token"
+                        android.util.Log.d("LoginActivity", "Updating FCM token at URL: $fcmUrl")
+                        android.util.Log.d("LoginActivity", "FCM token: ${fcm.take(50)}...")
                         runCatching {
                             usersApi.updateFcmToken(FcmTokenBody(fcm))
-                            android.util.Log.d("LoginActivity", "FCM token updated successfully: $fcm")
+                            android.util.Log.d("LoginActivity", "FCM token updated successfully")
                         }.onFailure {
                             android.util.Log.e("LoginActivity", "Failed to update FCM token", it)
                         }
+                    } else {
+                        android.util.Log.w("LoginActivity", "FCM token is null or empty, skipping update")
                     }
 
                     // Persist simple header fields for Profile
@@ -133,7 +162,10 @@ class LoginActivity : AppCompatActivity() {
                     finish()
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    android.util.Log.e("Login", "login error", e)
+                    android.util.Log.e("LoginActivity", "=== LOGIN ERROR ===")
+                    android.util.Log.e("LoginActivity", "Error Type: ${e.javaClass.simpleName}")
+                    android.util.Log.e("LoginActivity", "Error Message: ${e.message}")
+                    android.util.Log.e("LoginActivity", "Error Details:", e)
                     Toast.makeText(this@LoginActivity, e.message ?: "Login failed", Toast.LENGTH_LONG).show()
                 }
             }

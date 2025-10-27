@@ -33,9 +33,12 @@ class TasksFragment : Fragment() {
     private lateinit var adapter: TasksAdapter
     private lateinit var progressBar: ProgressBar
     private lateinit var tvEmpty: TextView
+    private lateinit var spinnerFilter: android.widget.Spinner
+    private lateinit var spinnerSort: android.widget.Spinner
     private val tasksApi: TasksApi by lazy { com.yatri.net.Network.retrofit.create(TasksApi::class.java) }
     private var roleId: String? = null // Loaded from DataStore
     private val gson = Gson()
+    private var allTasks: List<AssignedTask> = emptyList() // All tasks from API
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_tasks, container, false)
@@ -47,6 +50,11 @@ class TasksFragment : Fragment() {
         val rv = view.findViewById<RecyclerView>(R.id.rvTasks)
         progressBar = view.findViewById(R.id.progressBar)
         tvEmpty = view.findViewById(R.id.tvEmpty)
+        spinnerFilter = view.findViewById(R.id.spinnerFilter)
+        spinnerSort = view.findViewById(R.id.spinnerSort)
+        
+        // Setup filter and sort spinners
+        setupSpinners()
 
         // Load active roleId from DataStore
         viewLifecycleOwner.lifecycleScope.launch {
@@ -72,6 +80,35 @@ class TasksFragment : Fragment() {
         // Use Network.retrofit for all API calls to ensure Authorization header is set
         android.util.Log.d("TasksFragment", "Retrofit initialized with Network.retrofit")
         loadTasks()
+    }
+    
+    private fun setupSpinners() {
+        // Setup filter spinner
+        val filterItems = arrayOf("All", "ASSIGNED", "IN_PROGRESS", "VERIFICATION_PENDING", "COMPLETED", "High", "Medium", "Low")
+        val filterAdapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, filterItems)
+        filterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerFilter.adapter = filterAdapter
+        
+        // Setup sort spinner
+        val sortItems = arrayOf("Due Date", "Priority")
+        val sortAdapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, sortItems)
+        sortAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerSort.adapter = sortAdapter
+        
+        // Add listeners to update tasks when spinner selection changes
+        spinnerFilter.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                updateFilteredSortedTasks()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+        
+        spinnerSort.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                updateFilteredSortedTasks()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
     }
     
     private fun handleStatusUpdate(task: AssignedTask) {

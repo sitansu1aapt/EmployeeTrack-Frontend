@@ -30,7 +30,33 @@ class AttendanceAdapter(private val items: List<AttendanceItem>) : RecyclerView.
             val tvShift = card.findViewById<TextView>(R.id.tvShift)
             val tvDuration = card.findViewById<TextView>(R.id.tvDuration)
             val tvStatus = card.findViewById<TextView>(R.id.tvStatus)
-            // TODO: Set values and style badges/colors as in React Native
+
+            // Format date: "2025-10-27" -> "Mon, 27 Oct"
+            val inputDateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            val outputDateFormat = java.text.SimpleDateFormat("EEE, d MMM", java.util.Locale.US)
+            val formattedDate = try {
+                item.date.let { d ->
+                    if (d.isNotEmpty()) outputDateFormat.format(inputDateFormat.parse(d)) else "--"
+                }
+            } catch (e: Exception) { "--" }
+            tvDate.text = formattedDate
+
+            // Format time: "2025-10-27T11:41:34.846Z" -> "5:11 pm"
+            fun formatTime(iso: String?): String {
+                if (iso.isNullOrEmpty()) return "--"
+                return try {
+                    val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US)
+                    val outFormat = java.text.SimpleDateFormat("h:mm a", java.util.Locale.US)
+                    val date = isoFormat.parse(iso)
+                    outFormat.format(date)
+                } catch (e: Exception) { "--" }
+            }
+
+            tvCheckIn.text = "Check In: " + formatTime(item.checkIn)
+            tvCheckOut.text = "Check Out: " + formatTime(item.checkOut)
+            tvShift.text = "Shift: " + (item.shift ?: "--")
+            tvDuration.text = "Duration: " + (item.duration ?: "--")
+            tvStatus.text = item.status
         }
     }
 }

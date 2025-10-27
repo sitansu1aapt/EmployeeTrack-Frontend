@@ -29,17 +29,6 @@ class SplashActivity : AppCompatActivity() {
         
         // Initialize localization first
         LocalizationManager.initialize(this)
-        
-        // Load auth token from DataStore if present and set TokenStore.token
-        lifecycleScope.launch {
-            val tok = applicationContext.dataStore.data.first()[PrefKeys.AUTH_TOKEN]
-            if (!tok.isNullOrEmpty()) {
-                TokenStore.token = tok
-                android.util.Log.d("SplashActivity", "Loaded existing token from storage")
-            } else {
-                android.util.Log.d("SplashActivity", "No existing token found")
-            }
-        }
 
         // Samsung UFC workaround - catch and ignore the ClassNotFoundException
         try {
@@ -60,9 +49,16 @@ class SplashActivity : AppCompatActivity() {
 
         ensureNotificationsEnabled()
 
-        // Check for existing token and redirect accordingly
+        // Load auth token from DataStore and redirect accordingly
         lifecycleScope.launch {
             val tok = applicationContext.dataStore.data.first()[PrefKeys.AUTH_TOKEN]
+            if (!tok.isNullOrEmpty()) {
+                TokenStore.token = tok
+                android.util.Log.d("SplashActivity", "Loaded existing token from storage: ${tok.take(20)}...")
+            } else {
+                android.util.Log.d("SplashActivity", "No existing token found")
+            }
+            
             Handler(Looper.getMainLooper()).postDelayed({
                 if (!tok.isNullOrEmpty()) {
                     // Token exists, go directly to main app

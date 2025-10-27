@@ -107,11 +107,11 @@ class TasksAdapter(
                 android.util.Log.d("TasksAdapter", "Button clicked for task: ${task.taskTitle}, Status: ${task.taskStatus}")
                 android.util.Log.d("TasksAdapter", "Calling onAction callback...")
                 onAction(task)
-<<<<<<< HEAD
+
                 android.util.Log.d("TasksAdapter-onAction", "onAction called")
-=======
+
                 android.util.Log.d("TasksAdapter", "onAction callback completed")
->>>>>>> 06b04b1c4c128b29eed4fea4a13ebedffaa115a5
+
             }
         }
     }

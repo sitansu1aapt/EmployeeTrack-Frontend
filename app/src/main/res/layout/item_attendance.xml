@@ -13,25 +13,41 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Wed, 15 Oct"
-            android:textStyle="bold"
-            android:textSize="16sp" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="Mon, 27 Oct"
+                android:textStyle="bold"
+                android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="PRESENT"
+                android:textColor="@color/success"
+                android:textStyle="bold"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="4dp">
             <TextView
                 android:id="@+id/tvCheckIn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Check In: --" />
+                android:text="Check In: 11:41 AM" />
             <TextView
                 android:id="@+id/tvCheckOut"
                 android:layout_width="0dp"
@@ -44,29 +60,13 @@
             android:id="@+id/tvShift"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Shift: Not Assigned"
-            android:layout_marginTop="4dp" />
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
+            android:text="Shift: All shift"
+            android:layout_marginTop="2dp" />
+        <TextView
+            android:id="@+id/tvDuration"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp">
-            <TextView
-                android:id="@+id/tvDuration"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Duration: --" />
-            <TextView
-                android:id="@+id/tvStatus"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Status: N/A"
-                android:textAlignment="textEnd"
-                android:textStyle="bold" />
-        </LinearLayout>
-
+            android:text="Duration: --"
+            android:layout_marginTop="2dp" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

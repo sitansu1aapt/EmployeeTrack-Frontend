@@ -43,10 +43,6 @@ class DashboardFragment : Fragment() {
     private lateinit var tvBackgroundStatus: TextView
     private lateinit var btnCheckIn: Button
     private lateinit var btnCheckOut: Button
-    private lateinit var btnEmergency: Button
-    private lateinit var btnReportIssue: Button
-    private lateinit var btnSwitchRole: Button
-    private lateinit var btnSwitchLanguage: Button
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     
     // Timer variables
@@ -76,7 +72,6 @@ class DashboardFragment : Fragment() {
 
         // Fetch duty status initially
         fetchDutyStatusAndUpdateUI()
-        loadUserProfile()
     }
 
     private fun initializeViews(view: View) {
@@ -85,10 +80,6 @@ class DashboardFragment : Fragment() {
         tvBackgroundStatus = view.findViewById(R.id.tvBackgroundStatus)
         btnCheckIn = view.findViewById(R.id.btnCheckIn)
         btnCheckOut = view.findViewById(R.id.btnCheckOut)
-        btnEmergency = view.findViewById(R.id.btnEmergency)
-        btnReportIssue = view.findViewById(R.id.btnReportIssue)
-        btnSwitchRole = view.findViewById(R.id.btnSwitchRole)
-        btnSwitchLanguage = view.findViewById(R.id.btnSwitchLanguage)
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
     }
 
@@ -101,21 +92,6 @@ class DashboardFragment : Fragment() {
             startActivity(Intent(requireContext(), com.yatri.checkin.CheckInActivity::class.java).putExtra("mode", "checkout"))
         }
         
-        btnEmergency.setOnClickListener {
-            handleEmergency()
-        }
-        
-        btnReportIssue.setOnClickListener {
-            handleReportIssue()
-        }
-        
-        btnSwitchRole.setOnClickListener {
-            showRoleSwitchDialog()
-        }
-        
-        btnSwitchLanguage.setOnClickListener {
-            showLanguageSwitchDialog()
-        }
         
         view.findViewById<View>(R.id.cardAttendance).setOnClickListener {
             startActivity(Intent(requireContext(), com.yatri.attendance.AttendanceHistoryActivity::class.java))
@@ -192,34 +168,6 @@ class DashboardFragment : Fragment() {
         view.post { centerToLatest(mapFrag, postToServer = false) }
     }
 
-    // Emergency and Issue Handling
-    private fun handleEmergency() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Emergency Alert")
-            .setMessage("Are you sure you want to send an emergency alert? This will notify your supervisor immediately.")
-            .setPositiveButton("Send Alert") { _, _ ->
-                sendEmergencyAlert()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun handleReportIssue() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Report Issue")
-            .setMessage("Select the type of issue you want to report:")
-            .setItems(arrayOf("Equipment Malfunction", "Safety Concern", "Other Issue")) { _, which ->
-                val issueType = when (which) {
-                    0 -> "Equipment Malfunction"
-                    1 -> "Safety Concern"
-                    else -> "Other Issue"
-                }
-                reportIssue(issueType)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
     // Role Switching
     private fun showRoleSwitchDialog() {
         lifecycleScope.launch {
@@ -257,8 +205,7 @@ class DashboardFragment : Fragment() {
             .setSingleChoiceItems(languages, currentIndex) { dialog, which ->
                 val selectedLangCode = langCodes[which]
                 LocalizationManager.setLanguage(requireContext(), selectedLangCode)
-                updateLanguageButton(languages[which])
-                dialog.dismiss()
+                        dialog.dismiss()
                 // Restart activity to apply language changes
                 requireActivity().recreate()
             }
@@ -286,13 +233,10 @@ class DashboardFragment : Fragment() {
         tvDutyTimer.text = timeString
     }
 
-    private fun updateLanguageButton(language: String) {
-        btnSwitchLanguage.text = language
-    }
+    // Removed updateLanguageButton: no longer needed after removing language UI
 
     private fun refreshDashboard() {
         fetchDutyStatusAndUpdateUI()
-        loadUserProfile()
         view?.let { centerToLatest(childFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment, postToServer = false) }
         
         // Stop refresh animation after a short delay
@@ -302,72 +246,6 @@ class DashboardFragment : Fragment() {
     }
 
     // API Calls
-    private fun sendEmergencyAlert() {
-        kotlin.concurrent.thread {
-            try {
-                val body = org.json.JSONObject().apply {
-                    put("type", "emergency")
-                    put("message", "Emergency alert sent from mobile app")
-                    put("timestamp", System.currentTimeMillis())
-                }.toString()
-                
-                val req = okhttp3.Request.Builder()
-                    .url("${AppConfig.API_BASE_URL}alerts/emergency")
-                    .post(body.toRequestBody("application/json".toMediaType()))
-                    .header("Authorization", "Bearer ${TokenStore.token}")
-                    .build()
-                    
-                okhttp3.OkHttpClient().newCall(req).execute().use { response ->
-                    requireActivity().runOnUiThread {
-                        if (response.isSuccessful) {
-                            android.widget.Toast.makeText(requireContext(), "Emergency alert sent successfully", android.widget.Toast.LENGTH_SHORT).show()
-                        } else {
-                            android.widget.Toast.makeText(requireContext(), "Failed to send emergency alert", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("Dashboard", "Error sending emergency alert", e)
-                requireActivity().runOnUiThread {
-                    android.widget.Toast.makeText(requireContext(), "Error sending emergency alert", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun reportIssue(issueType: String) {
-        kotlin.concurrent.thread {
-            try {
-                val body = org.json.JSONObject().apply {
-                    put("type", "issue_report")
-                    put("issue_type", issueType)
-                    put("message", "Issue reported from mobile app")
-                    put("timestamp", System.currentTimeMillis())
-                }.toString()
-                
-                val req = okhttp3.Request.Builder()
-                    .url("${AppConfig.API_BASE_URL}reports/issue")
-                    .post(body.toRequestBody("application/json".toMediaType()))
-                    .header("Authorization", "Bearer ${TokenStore.token}")
-                    .build()
-                    
-                okhttp3.OkHttpClient().newCall(req).execute().use { response ->
-                    requireActivity().runOnUiThread {
-                        if (response.isSuccessful) {
-                            android.widget.Toast.makeText(requireContext(), "Issue reported successfully", android.widget.Toast.LENGTH_SHORT).show()
-                        } else {
-                            android.widget.Toast.makeText(requireContext(), "Failed to report issue", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("Dashboard", "Error reporting issue", e)
-                requireActivity().runOnUiThread {
-                    android.widget.Toast.makeText(requireContext(), "Error reporting issue", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
 
     private fun switchToRole(roleName: String) {
         lifecycleScope.launch {
@@ -375,34 +253,12 @@ class DashboardFragment : Fragment() {
                 requireContext().dataStore.edit { prefs ->
                     prefs[PrefKeys.ACTIVE_ROLE_NAME] = roleName
                 }
-                btnSwitchRole.text = roleName
                 android.widget.Toast.makeText(requireContext(), "Switched to $roleName role", android.widget.Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 android.util.Log.e("Dashboard", "Error switching role", e)
             }
         }
     }
-
-    private fun loadUserProfile() {
-        lifecycleScope.launch {
-            try {
-                val prefs = requireContext().dataStore.data.first()
-                val userName = prefs[PrefKeys.USER_NAME] ?: "Employee"
-                val roleName = prefs[PrefKeys.ACTIVE_ROLE_NAME] ?: "Employee"
-                
-                view?.findViewById<TextView>(R.id.tvUserName)?.text = userName
-                view?.findViewById<TextView>(R.id.tvRole)?.text = roleName
-                btnSwitchRole.text = roleName
-                
-                // Update language button
-                val currentLang = LocalizationManager.getCurrentLanguage()
-                updateLanguageButton(if (currentLang == "or") "Odia" else "English")
-            } catch (e: Exception) {
-                android.util.Log.e("Dashboard", "Error loading user profile", e)
-            }
-        }
-    }
-
     override fun onResume() {
         super.onResume()
         // Restore tracking switch state
@@ -413,7 +269,6 @@ class DashboardFragment : Fragment() {
 
         // Refresh duty status when returning to dashboard
         fetchDutyStatusAndUpdateUI()
-        loadUserProfile()
     }
 
     override fun onDestroyView() {

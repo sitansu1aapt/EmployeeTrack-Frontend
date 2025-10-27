@@ -16,14 +16,20 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.yatri.net.Network
 
 class ProfileFragment : Fragment() {
+    private val profileApi = Network.retrofit.create(ProfileApi::class.java)
+    
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_profile, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Load profile data from API
+        loadProfileData(view)
         // Background tracking
         view.findViewById<Switch>(R.id.swBackground)?.setOnCheckedChangeListener { _, isChecked ->
             val ctx = requireContext()
@@ -67,13 +73,82 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        // Bind header placeholders (from DataStore if present)
+        // Bind header placeholders (from DataStore if present) - fallback only
         lifecycleScope.launch {
             val prefs = requireContext().dataStore.data.first()
             val name = prefs[PrefKeys.USER_NAME] ?: "test user"
             val role = prefs[PrefKeys.ACTIVE_ROLE_NAME] ?: "EMPLOYEE"
             view.findViewById<TextView>(R.id.tvName)?.text = name
             view.findViewById<TextView>(R.id.tvRole)?.text = role
+        }
+    }
+    
+    private fun loadProfileData(view: View) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val profileUrl = "${AppConfig.API_BASE_URL}auth/me"
+                android.util.Log.d("ProfileFragment", "=== LOADING PROFILE ===")
+                android.util.Log.d("ProfileFragment", "URL: $profileUrl")
+                android.util.Log.d("ProfileFragment", "Token: ${TokenStore.token?.take(30)}...")
+                
+                val response = profileApi.getProfile()
+                
+                if (response.isSuccessful) {
+                    val profileData = response.body()
+                    if (profileData?.success == true) {
+                        android.util.Log.d("ProfileFragment", "Profile loaded successfully")
+                        android.util.Log.d("ProfileFragment", "User: ${profileData.data.user.full_name}")
+                        android.util.Log.d("ProfileFragment", "Email: ${profileData.data.user.email}")
+                        android.util.Log.d("ProfileFragment", "Role: ${profileData.data.user.activeContext.roleName}")
+                        
+                        // Update UI with real data
+                        view.findViewById<TextView>(R.id.tvName)?.text = profileData.data.user.full_name
+                        view.findViewById<TextView>(R.id.tvRole)?.text = profileData.data.user.activeContext.roleName
+                        view.findViewById<TextView>(R.id.tvUserId)?.text = "id: ${profileData.data.user.user_id}"
+                        view.findViewById<TextView>(R.id.tvEmail)?.text = profileData.data.user.email
+                        
+                        // Update department if available
+                        val department = profileData.data.user.department_id
+                        view.findViewById<TextView>(R.id.tvDepartment)?.text = department ?: "Not Assigned"
+                        
+                        // Update organization
+                        view.findViewById<TextView>(R.id.tvOrganization)?.text = 
+                            "${profileData.data.user.activeContext.roleName} @ OrgID ${profileData.data.user.organization_id}"
+                        
+                        // Update DataStore with latest information
+                        requireContext().dataStore.edit {
+                            it[PrefKeys.USER_NAME] = profileData.data.user.full_name
+                            it[PrefKeys.ACTIVE_ROLE_ID] = profileData.data.auth.roleId
+                            it[PrefKeys.ACTIVE_ROLE_NAME] = profileData.data.user.activeContext.roleName
+                        }
+                    } else {
+                        android.util.Log.e("ProfileFragment", "Profile API returned success=false")
+                        android.util.Log.e("ProfileFragment", "Message: ${profileData?.message}")
+                    }
+                } else {
+                    android.util.Log.e("ProfileFragment", "Profile API call failed")
+                    android.util.Log.e("ProfileFragment", "Status code: ${response.code()}")
+                    android.util.Log.e("ProfileFragment", "Message: ${response.message()}")
+                    
+                    when (response.code()) {
+                        401 -> {
+                            android.util.Log.e("ProfileFragment", "Unauthorized - token may be invalid")
+                            // User needs to login again
+                        }
+                        403 -> {
+                            android.util.Log.e("ProfileFragment", "Forbidden - insufficient permissions")
+                        }
+                        else -> {
+                            android.util.Log.e("ProfileFragment", "Server error: ${response.code()}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileFragment", "=== PROFILE ERROR ===")
+                android.util.Log.e("ProfileFragment", "Error Type: ${e.javaClass.simpleName}")
+                android.util.Log.e("ProfileFragment", "Error Message: ${e.message}")
+                android.util.Log.e("ProfileFragment", "Error Details:", e)
+            }
         }
     }
 }
