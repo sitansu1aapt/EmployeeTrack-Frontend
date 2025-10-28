@@ -147,8 +147,10 @@ class PatrolDashboardActivity : AppCompatActivity() {
                     lifecycleScope.launch {
                         val prefs = applicationContext.dataStore.data.first()
                         val roleId = prefs[PrefKeys.ACTIVE_ROLE_ID] ?: ""
+                        Log.d(TAG, "Opening ActivePatrolActivity with sessionId=${s.patrol_session_id}, roleId=$roleId, routeName=${s.route_name}")
                         startActivity(Intent(ctx, ActivePatrolActivity::class.java)
                             .putExtra("sessionId", s.patrol_session_id)
+                            .putExtra("routeName", s.route_name)
                             .putExtra("roleId", roleId))
                     }
                 }
