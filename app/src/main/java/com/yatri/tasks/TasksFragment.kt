@@ -117,12 +117,27 @@ class TasksFragment : Fragment() {
         android.util.Log.d("TasksFragment", "handleStatusUpdate called for task: ${task.taskId}, current status: ${task.taskStatus}")
         android.util.Log.d("TasksFragment", "Task details: assignmentId=${task.assignmentId}, title=${task.taskTitle}")
         
+        // Assignees can update status based on current status
         val newStatus = when (task.taskStatus) {
             "ASSIGNED" -> "IN_PROGRESS"
             "IN_PROGRESS" -> "VERIFICATION_PENDING"
-            "VERIFICATION_PENDING" -> "COMPLETED"
+            "VERIFICATION_PENDING" -> {
+                // Note: API doesn't allow assignees to directly set COMPLETED
+                // They can only request VERIFICATION_PENDING, then assigner approves
+                android.widget.Toast.makeText(
+                    context,
+                    "Task verification is pending. Waiting for approval.",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+                return
+            }
             else -> {
                 android.util.Log.e("TasksFragment", "Invalid task status for update: ${task.taskStatus}")
+                android.widget.Toast.makeText(
+                    context,
+                    "Cannot update task status. Task is already ${task.taskStatus}",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
                 return
             }
         }
@@ -132,7 +147,6 @@ class TasksFragment : Fragment() {
         val feedbackMessage = when (newStatus) {
             "IN_PROGRESS" -> "Starting task..."
             "VERIFICATION_PENDING" -> "Requesting completion..."
-            "COMPLETED" -> "Task marked as completed!"
             else -> "Updating task status..."
         }
 
@@ -172,9 +186,9 @@ class TasksFragment : Fragment() {
                 try {
                     val rid = roleId ?: ""
                     val result = tasksApi.updateTaskStatusByAssignee(
-                        rid,
-                        task.assignmentId,
-                        requestBody
+                        task.assignmentId,  // assignmentId first
+                        rid,                 // roleId second
+                        requestBody          // body third
                     )
                     android.util.Log.d("TasksFragment", "API call executed successfully")
                 } catch (e: Exception) {
@@ -183,6 +197,7 @@ class TasksFragment : Fragment() {
                 }
                 android.util.Log.d("TasksFragment", "API call successful, reloading tasks")
 
+                // Reload tasks to get the updated list from the server - MUST be on Main thread
                 withContext(Dispatchers.Main) {
                     val successMessage = when (newStatus) {
                         "IN_PROGRESS" -> "Task started successfully"
@@ -195,10 +210,10 @@ class TasksFragment : Fragment() {
                         successMessage,
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
+                    
+                    // Call loadTasks from Main thread
+                    loadTasks()
                 }
-
-                // Reload tasks to get the updated list from the server
-                loadTasks()
             } catch (e: Exception) {
                 // Enhanced error logging
                 android.util.Log.e("TasksFragment", "Error updating task status: ${e.message}", e)

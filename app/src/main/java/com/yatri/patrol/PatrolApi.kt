@@ -12,6 +12,7 @@ import retrofit2.http.Query
 
 @Serializable data class PatrolSession(
     val patrol_session_id: String,
+    val patrol_route_id: String? = null,
     val route_name: String,
     val status: String,
     val scheduled_start_time: String? = null,

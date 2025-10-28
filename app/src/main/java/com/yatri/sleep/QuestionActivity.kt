@@ -14,6 +14,7 @@ import com.yatri.net.Network
 import com.yatri.dataStore
 import com.yatri.PrefKeys
 import com.yatri.TokenStore
+import com.yatri.AppConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,6 +26,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.create
@@ -34,6 +36,8 @@ class QuestionActivity : AppCompatActivity() {
     private var selectedOption: String? = null
     private var hasSubmitted = false
     private var selectedButton: Button? = null
+    private var initialDuration: Int = 30
+    private var currentTimer: Int = 30
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +67,10 @@ class QuestionActivity : AppCompatActivity() {
         val questionText = intent.getStringExtra("question_text") ?: "Sleep alert"
         val optionsJson = intent.getStringExtra("options") ?: "[]"
         val duration = intent.getIntExtra("duration_seconds", 30)
+        
+        // Store initial duration for calculation
+        initialDuration = duration
+        currentTimer = duration
 
         findViewById<TextView>(R.id.tvQuestion).text = questionText
         val options = parseOptions(optionsJson)
@@ -95,32 +103,85 @@ class QuestionActivity : AppCompatActivity() {
         val tvTimer = findViewById<TextView>(R.id.tvTimer)
         object : CountDownTimer((duration * 1000).toLong(), 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                tvTimer.text = "Time left: ${millisUntilFinished / 1000}s"
+                currentTimer = (millisUntilFinished / 1000).toInt()
+                tvTimer.text = "Time left: ${currentTimer}s"
             }
-            override fun onFinish() { submit(sessionId, questionId, selectedOption, duration) }
+            override fun onFinish() { 
+                currentTimer = 0
+                submit(sessionId, questionId, selectedOption) 
+            }
         }.start()
 
         findViewById<Button>(R.id.btnSubmit).setOnClickListener {
             android.util.Log.d("QuestionActivity", "Submit clicked with selectedOption=$selectedOption")
-            submit(sessionId, questionId, selectedOption, duration)
+            submit(sessionId, questionId, selectedOption)
         }
     }
 
-    private fun submit(sessionId: String, questionId: String, optionId: String?, duration: Int) {
+    private fun submit(sessionId: String, questionId: String, optionId: String?) {
         if (hasSubmitted) return
         hasSubmitted = true
+        
+        // Calculate duration taken (time elapsed)
+        val durationTakenSeconds = initialDuration - currentTimer
+        
+        android.util.Log.d("QuestionActivity", "=== SUBMIT ANSWER API CALL ===")
+        android.util.Log.d("QuestionActivity", "Question ID: $questionId")
+        android.util.Log.d("QuestionActivity", "Selected Option ID: $optionId")
+        android.util.Log.d("QuestionActivity", "Session ID: $sessionId")
+        android.util.Log.d("QuestionActivity", "Duration Taken: ${durationTakenSeconds}s")
+        android.util.Log.d("QuestionActivity", "Initial Duration: ${initialDuration}s")
+        android.util.Log.d("QuestionActivity", "Current Timer: ${currentTimer}s")
+        
         scope.launch(Dispatchers.IO) {
             try {
                 val api = Network.retrofit.create<SleepApi>()
-                api.submitAnswer(
-                    SleepAnswerBody(
-                        question_id = questionId,
-                        selected_option_id = optionId,
-                        session_id = sessionId,
-                        duration_taken_seconds = duration
-                    )
+                val requestBody = SleepAnswerBody(
+                    question_id = questionId,
+                    selected_option_id = optionId,
+                    session_id = sessionId,
+                    duration_taken_seconds = durationTakenSeconds
                 )
-            } catch (_: Exception) { }
+                
+                val fullUrl = "${AppConfig.API_BASE_URL}sleep-tracking/submit-answer"
+                android.util.Log.d("QuestionActivity", "Making API call to: $fullUrl")
+                android.util.Log.d("QuestionActivity", "Method: POST")
+                android.util.Log.d("QuestionActivity", "Request body: $requestBody")
+                
+                val response = api.submitAnswer(requestBody)
+                
+                android.util.Log.d("QuestionActivity", "=== SUBMIT ANSWER API RESPONSE ===")
+                android.util.Log.d("QuestionActivity", "URL: $fullUrl")
+                android.util.Log.d("QuestionActivity", "Status Code: ${response.code()}")
+                
+                if (response.isSuccessful) {
+                    android.util.Log.d("QuestionActivity", "Status: success")
+                    android.util.Log.d("QuestionActivity", "Submit answer completed successfully")
+                } else {
+                    android.util.Log.e("QuestionActivity", "Status: error")
+                    android.util.Log.e("QuestionActivity", "HTTP Error Code: ${response.code()}")
+                    val errorBody = response.errorBody()?.string()
+                    android.util.Log.e("QuestionActivity", "Error Response Body: $errorBody")
+                }
+                
+            } catch (e: Exception) {
+                android.util.Log.e("QuestionActivity", "=== SUBMIT ANSWER ERROR ===")
+                android.util.Log.e("QuestionActivity", "Error Type: ${e.javaClass.simpleName}")
+                android.util.Log.e("QuestionActivity", "Error Message: ${e.message}")
+                android.util.Log.e("QuestionActivity", "Error Details:", e)
+                
+                // Check if it's an HTTP error
+                if (e is retrofit2.HttpException) {
+                    android.util.Log.e("QuestionActivity", "HTTP Error Code: ${e.code()}")
+                    try {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        android.util.Log.e("QuestionActivity", "Error Response Body: $errorBody")
+                    } catch (ex: Exception) {
+                        android.util.Log.e("QuestionActivity", "Failed to read error body: ${ex.message}")
+                    }
+                }
+            }
+            
             launch(Dispatchers.Main) {
                 Toast.makeText(this@QuestionActivity, "Submitted", Toast.LENGTH_SHORT).show()
                 finish()
@@ -142,7 +203,7 @@ data class SleepAnswerBody(
 
 interface SleepApi {
     @POST("sleep-tracking/submit-answer")
-    suspend fun submitAnswer(@Body body: SleepAnswerBody)
+    suspend fun submitAnswer(@Body body: SleepAnswerBody): Response<Unit>
 }
 
 private fun parseOptions(json: String): List<Option> {

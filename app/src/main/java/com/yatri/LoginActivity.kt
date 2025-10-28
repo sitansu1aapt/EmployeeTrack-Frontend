@@ -66,7 +66,7 @@ class LoginActivity : AppCompatActivity() {
         acType.setText(typeItems.first(), false)
 
         // Set default values for Employee ID and Password
-        etIdentifier.setText("EMP1118")
+        etIdentifier.setText("EMP1119")
         etPassword.setText("Password123")
 
         val authApi = Network.retrofit.create<AuthApi>()

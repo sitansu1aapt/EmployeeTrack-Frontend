@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.yatri.patrol.PatrolApi
+import com.yatri.AppConfig
 import com.yatri.patrol.PatrolSession
 import com.yatri.patrol.StartPatrolBody
 import com.yatri.net.Network
@@ -172,11 +173,24 @@ class PatrolDashboardActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val api = Network.retrofit.create<PatrolApi>()
-                // RN sends routeId: parse from session if present, or fallback
-                val routeId = s.patrol_session_id.filter { it.isDigit() }.toIntOrNull() ?: 0
-                Log.d(TAG, "Start Patrol API - roleId: $roleId, routeId: $routeId, sessionId: ${s.patrol_session_id}")
+                
+                // Extract routeId from patrol_route_id (matches React Native)
+                val routeId = s.patrol_route_id?.toIntOrNull() ?: 0
+                
+                Log.d(TAG, "=== START PATROL API CALL ===")
+                Log.d(TAG, "Role ID: $roleId")
+                Log.d(TAG, "Route ID: $routeId")
+                Log.d(TAG, "Session ID: ${s.patrol_session_id}")
+                Log.d(TAG, "Route Name: ${s.route_name}")
+                Log.d(TAG, "Request body: StartPatrolBody(routeId=$routeId)")
+                val fullUrl = "${AppConfig.API_BASE_URL}employee/patrol/sessions/start?roleId=${roleId ?: ""}"
+                Log.d(TAG, "URL: $fullUrl")
+                
                 val response = api.startSession(roleId ?: "", StartPatrolBody(routeId))
-                Log.d(TAG, "Start Patrol API response: ${response.raw()} body: ${response.body()} code: ${response.code()}")
+                
+                Log.d(TAG, "=== START PATROL API RESPONSE ===")
+                Log.d(TAG, "Status Code: ${response.code()}")
+                Log.d(TAG, "Response Body: ${response.body()}")
                 
                 if (response.isSuccessful) {
                     val env = response.body()
@@ -184,6 +198,9 @@ class PatrolDashboardActivity : AppCompatActivity() {
                     loadSessions()
                 } else {
                     // Handle different error codes
+                    val errorBody = response.errorBody()?.string()
+                    Log.e(TAG, "Error Response Body: $errorBody")
+                    
                     when (response.code()) {
                         403 -> {
                             Log.e(TAG, "Forbidden: User doesn't have permission to start patrol")
@@ -193,14 +210,22 @@ class PatrolDashboardActivity : AppCompatActivity() {
                             Log.e(TAG, "Unauthorized: Invalid or missing authentication token")
                             Toast.makeText(this@PatrolDashboardActivity, "Authentication required. Please log in again.", Toast.LENGTH_LONG).show()
                         }
+                        500 -> {
+                            Log.e(TAG, "Internal Server Error: $errorBody")
+                            val errorMessage = errorBody ?: "Internal server error"
+                            Toast.makeText(this@PatrolDashboardActivity, "Server error: $errorMessage", Toast.LENGTH_LONG).show()
+                        }
                         else -> {
-                            Log.e(TAG, "Failed to start patrol. Error code: ${response.code()} body: ${response.errorBody()?.string()}")
+                            Log.e(TAG, "Failed to start patrol. Error code: ${response.code()} body: $errorBody")
                             Toast.makeText(this@PatrolDashboardActivity, "Failed to start patrol. Error code: ${response.code()}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exception while starting patrol", e)
+                Log.e(TAG, "=== START PATROL EXCEPTION ===")
+                Log.e(TAG, "Error Type: ${e.javaClass.simpleName}")
+                Log.e(TAG, "Error Message: ${e.message}")
+                Log.e(TAG, "Error Details:", e)
                 Toast.makeText(this@PatrolDashboardActivity, e.message ?: "Failed to start", Toast.LENGTH_LONG).show()
             }
         }
