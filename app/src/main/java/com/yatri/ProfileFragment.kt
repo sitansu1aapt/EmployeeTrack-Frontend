@@ -80,6 +80,12 @@ class ProfileFragment : Fragment() {
             val role = prefs[PrefKeys.ACTIVE_ROLE_NAME] ?: "EMPLOYEE"
             view.findViewById<TextView>(R.id.tvName)?.text = name
             view.findViewById<TextView>(R.id.tvRole)?.text = role
+            // Set version text below logout
+            val versionName = try {
+                val pInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+                pInfo.versionName ?: "1.0"
+            } catch (e: Exception) { "1.0" }
+            view.findViewById<TextView>(R.id.tvVersion)?.text = "v$versionName"
         }
     }
     

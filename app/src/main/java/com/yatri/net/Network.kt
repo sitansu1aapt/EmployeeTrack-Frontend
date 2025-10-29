@@ -1,6 +1,8 @@
 package com.yatri.net
 
 import kotlinx.serialization.json.Json
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 // import okhttp3.logging.HttpLoggingInterceptor
@@ -9,6 +11,9 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.yatri.AppConfig
 import com.yatri.TokenStore
 import okhttp3.Interceptor
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import com.yatri.AppContext
 
 object Network {
     private val json = Json { ignoreUnknownKeys = true }
@@ -33,7 +38,45 @@ object Network {
                     .addHeader("Content-Type", "application/json")
                     .build()
                 android.util.Log.d("Network", "Request headers: ${authReq.headers}")
-                chain.proceed(authReq)
+                val startNs = System.nanoTime()
+                val response = chain.proceed(authReq)
+                val durationMs = ((System.nanoTime() - startNs) / 1_000_000L).toInt()
+                try {
+                    val ctx = AppContext.context
+                    val cm = ctx?.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                    val net = cm?.activeNetwork
+                    val caps = net?.let { cm.getNetworkCapabilities(it) }
+                    val connected = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+                    val connection = when {
+                        caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> "wifi"
+                        caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> "cellular"
+                        caps?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true -> "vpn"
+                        else -> "unknown"
+                    }
+                    val bundle = android.os.Bundle().apply {
+                        putString("url", authReq.url.encodedPath)
+                        putString("method", authReq.method)
+                        putInt("status_code", response.code)
+                        putInt("duration_ms", durationMs)
+                        putString("connection", connection)
+                        putString("connected", connected.toString())
+                    }
+                    Firebase.analytics.logEvent("api_call", bundle)
+                    if (response.code >= 400) {
+                        val errorSnippet = try { response.peekBody(1024).string().take(200) } catch (e: Exception) { null }
+                        val eb = android.os.Bundle().apply {
+                            putString("url", authReq.url.encodedPath)
+                            putString("method", authReq.method)
+                            putInt("status_code", response.code)
+                            putInt("duration_ms", durationMs)
+                            putString("error_body", errorSnippet)
+                            putString("connection", connection)
+                            putString("connected", connected.toString())
+                        }
+                        Firebase.analytics.logEvent("api_error", eb)
+                    }
+                } catch (_: Exception) { }
+                response
             })
             .addInterceptor(Interceptor { chain ->
                 val response = chain.proceed(chain.request())

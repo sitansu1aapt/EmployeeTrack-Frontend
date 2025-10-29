@@ -11,11 +11,10 @@ android {
 
     signingConfigs {
         create("release") {
-            // Comment out signing for now to avoid build errors
-            // storeFile = file("/Users/sitansujena/Documents/projects/2024/Aatp/Yatri/Admin/Yatri-frontend/yatriApp/android/app/my-release-key.jks")
-            // storePassword = "yatri2025#"
-            // keyAlias = "my-key-alias"
-            // keyPassword = "yatri2025#"
+            storeFile = file("../yatri.jks")
+            storePassword = "Flutter2@"
+            keyAlias = "key0"
+            keyPassword = "Flutter2@"
         }
     }
 
@@ -24,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -39,8 +38,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // Comment out signing for now
-            // signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -120,6 +118,8 @@ dependencies {
     // Firebase Messaging only (no analytics/crashlytics)
     implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
     implementation("com.google.firebase:firebase-messaging")
+    // Firebase Analytics
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
     // Location + Exif (for image rotation)
     implementation("com.google.android.gms:play-services-location:21.3.0")

@@ -234,6 +234,15 @@
                 android:textColor="@android:color/white"
                 android:drawableLeft="@drawable/ic_logout"
                 android:layout_marginTop="12dp" />
+
+            <TextView
+                android:id="@+id/tvVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="12sp"
+                android:textColor="@color/textLight"
+                android:layout_marginTop="8dp" />
         </LinearLayout>
 
     </LinearLayout>
