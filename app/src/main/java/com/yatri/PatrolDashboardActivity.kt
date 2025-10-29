@@ -165,7 +165,12 @@ class PatrolDashboardActivity : AppCompatActivity() {
                 tvSched.text = s.status
                 btnPrimary.text = "Details"
                 btnSecondary.visibility = View.GONE
-                btnPrimary.setOnClickListener { }
+                btnPrimary.setOnClickListener {
+                    // Navigate to PatrolStatusActivity with sessionId
+                    val intent = Intent(ctx, PatrolStatusActivity::class.java)
+                    intent.putExtra("sessionId", s.patrol_session_id)
+                    startActivity(intent)
+                }
             }
         }
         parent.addView(card)
