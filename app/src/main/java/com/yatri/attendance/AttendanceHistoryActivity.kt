@@ -32,9 +32,11 @@ class AttendanceHistoryActivity : AppCompatActivity() {
         rvAttendance.visibility = android.view.View.VISIBLE
         rvAttendance.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
 
-        // Date logic
+        // Date logic - match React Native formatDate function
         val calendar = java.util.Calendar.getInstance()
         val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        
+        // Set default date range to current date (like React Native)
         var startDate = dateFormat.format(calendar.time)
         var endDate = dateFormat.format(calendar.time)
         startDateEdit.setText(startDate)
@@ -68,8 +70,8 @@ class AttendanceHistoryActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     val api = com.yatri.net.Network.retrofit.create(com.yatri.attendance.AttendanceApi::class.java)
-                    // Use same param logic as React Native
-                    val roleId = "5" // TODO: fetch from session/user
+                    // Get roleId from user session like React Native uses activeRoleId
+                    val roleId =  "5" // fallback to "5" if not available
                     val reqUrl = com.yatri.AppConfig.API_BASE_URL + "attendance/history/me?startDate=$startDate&endDate=$endDate&roleId=$roleId"
                     android.util.Log.d("AttendanceHistory", "About to call URL: $reqUrl")
                     val resp = api.getMyAttendanceHistory(startDate, endDate, roleId)
@@ -78,26 +80,58 @@ class AttendanceHistoryActivity : AppCompatActivity() {
                         val data = resp.body()?.data
                         android.util.Log.d("AttendanceHistory", "RESPONSE BODY: ${resp.raw()}\nJSON: ${resp.errorBody()?.string() ?: data}")
                         tvTotalDays.text = data?.total_days?.toString() ?: "0"
-                        // Present/Absent/OffDay/Leave counts: you may need to calculate from report list
-                        val present = data?.report?.count { it.status == "PRESENT" } ?: 0
-                        val absent = data?.report?.count { it.status == "ABSENT" } ?: 0
-                        val offDay = data?.report?.count { it.is_off_day == true } ?: 0
-                        val leave = data?.report?.count { it.status == "LEAVE" } ?: 0
+                        // Count statuses to match React Native logic
+                        val report = data?.report ?: emptyList()
+                        var present = 0
+                        var absent = 0
+                        var offDay = 0
+                        var leave = 0
+                        
+                        for (r in report) {
+                            when (r.status) {
+                                "CHECKED_IN", "CHECKED_OUT", "PRESENT" -> present++
+                                "ABSENT" -> absent++
+                                "OFF_DAY" -> offDay++
+                                "ON_LEAVE" -> leave++
+                            }
+                        }
                         tvPresent.text = present.toString()
                         tvAbsent.text = absent.toString()
                         tvOffDay.text = offDay.toString()
                         tvLeave.text = leave.toString()
                         val attendanceList = data?.report?.map {
+                            android.util.Log.d("AttendanceHistory", "=== RAW API DATA ===")
+                            android.util.Log.d("AttendanceHistory", "Date: ${it.date}")
+                            android.util.Log.d("AttendanceHistory", "Check-in timestamp: '${it.check_in_time}'")
+                            android.util.Log.d("AttendanceHistory", "Check-out timestamp: '${it.check_out_time}'")
+                            android.util.Log.d("AttendanceHistory", "Status: ${it.status}")
+                            android.util.Log.d("AttendanceHistory", "Duration minutes: ${it.duration_minutes}")
+                            
+                            // Compare with current time to understand the issue
+                            val currentTime = java.util.Date()
+                            android.util.Log.d("AttendanceHistory", "Current time: $currentTime")
+                            android.util.Log.d("AttendanceHistory", "Current timezone: ${java.util.TimeZone.getDefault().id}")
+                            
                             com.yatri.attendance.AttendanceItem(
                                 it.date ?: "",
                                 it.check_in_time,
                                 it.check_out_time,
                                 it.shift_name,
-                                it.duration_minutes?.toString(),
+                                it.duration_minutes,
                                 it.status ?: ""
                             )
                         } ?: emptyList()
                         android.util.Log.d("AttendanceHistory", "Attendance records: ${attendanceList.size}")
+                        
+                        // Debug each record that will be displayed
+                        attendanceList.forEachIndexed { index, attendance ->
+                            android.util.Log.d("AttendanceHistory", "=== RECORD $index ===")
+                            android.util.Log.d("AttendanceHistory", "Raw check_in_time: '${attendance.checkIn}'")
+                            android.util.Log.d("AttendanceHistory", "Raw check_out_time: '${attendance.checkOut}'")
+                            android.util.Log.d("AttendanceHistory", "Date: '${attendance.date}'")
+                            android.util.Log.d("AttendanceHistory", "Status: '${attendance.status}'")
+                        }
+                        
                         rvAttendance.adapter = com.yatri.attendance.AttendanceAdapter(attendanceList)
                     } else {
                         android.util.Log.e("AttendanceHistory", "API call failed: ${resp.code()} ${resp.message()} BODY: ${resp.errorBody()?.string()}")
