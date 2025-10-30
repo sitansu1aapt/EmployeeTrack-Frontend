@@ -219,7 +219,7 @@ fun formatUtcTime(iso: String?): String {
         val date = utcFormat.parse(iso)
 
         val displayFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale("en", "IN"))
-        displayFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        displayFormat.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata")
 
         date?.let { displayFormat.format(it) } ?: "--"
     } catch (e: Exception) {

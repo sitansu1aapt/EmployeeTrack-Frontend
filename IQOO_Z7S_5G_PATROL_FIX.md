@@ -519,4 +519,41 @@ adb install app/build/outputs/apk/release/app-universal-release.apk
 - ✅ No timezone conversion errors
 - ✅ Perfect parity with React Native app
 
-**This release resolves the critical timezone issue and ensures perfect time consistency between Kotlin and React Native apps.**
+**This release resolves the critical timezone issue and ensures perfect time consistency between Kotlin and React Native apps.**## F
+resh Release Build Complete (Oct 30, 13:50)
+
+### **Build Status**: ✅ SUCCESS 
+- **Build Time**: 1 minute 26 seconds
+- **Tasks**: 52 actionable tasks (50 executed, 2 up-to-date)
+- **Version**: yatri1.2.4.apk
+
+### **Generated APK Files:**
+
+#### **Recommended for Iqoo Z7s 5G:**
+```bash
+# ARM64 optimized (BEST for Iqoo Z7s 5G)
+adb install app/build/outputs/apk/release/app-arm64-v8a-release.apk
+
+# Universal APK (Fallback)
+adb install app/build/outputs/apk/release/yatri1.2.4.apk
+```
+
+#### **All Available APKs:**
+- **ARM64 variants**: 5.1-5.2 MB (optimized for modern devices)
+- **ARMv7 variants**: 5.1-5.2 MB (older device compatibility)
+- **Universal APK**: 5.4 MB (works on all devices)
+
+### **Complete Fix Summary:**
+✅ **Critical Timezone Bug** - Check-in times display correctly  
+✅ **QR Scanner Enhancement** - Multi-strategy scanning for Iqoo Z7s 5G  
+✅ **Timer Display Fix** - React Native parity ("5h 31m 4s" format)  
+✅ **Location Services** - GPS checking with auto-prompts  
+✅ **Attendance Time Display** - Proper Asia/Kolkata timezone conversion  
+✅ **Refresh Button Fix** - Visible white refresh icon  
+✅ **Locale Consistency** - Uses `Locale("en", "IN")` like React Native  
+✅ **ProGuard Optimizations** - Enhanced rules for Iqoo/Vivo devices  
+
+### **Ready for Testing:**
+Install the APK and test the timezone fix by doing a fresh check-in when the dashboard shows exactly **5:30:00** or any round time for easy verification.
+
+**Expected Result**: Attendance history will show the SAME time as when you checked in (no more 6.5-hour difference).
