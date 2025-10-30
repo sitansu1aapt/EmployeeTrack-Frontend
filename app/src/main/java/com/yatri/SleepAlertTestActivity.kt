@@ -77,41 +77,13 @@ class SleepAlertTestActivity : AppCompatActivity() {
     }
     
     private fun testSleepAlertNotification() {
-        // Create a test sleep alert notification
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
-        val channelId = "alerts_v3"
+        // Initialize the new sleep alert system
+        SleepAlertManager.initialize(this)
         
-        // Try to get custom sleep alert sound
-        val soundUri = try {
-            val resourceId = resources.getIdentifier("sleep_alert", "raw", packageName)
-            if (resourceId != 0) {
-                android.net.Uri.parse("android.resource://$packageName/$resourceId")
-            } else {
-                android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
-            }
-        } catch (e: Exception) {
-            android.util.Log.w("SleepAlertTest", "Failed to load custom sleep alert sound: ${e.message}")
-            android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
-        }
+        // Test the new full-screen sleep alert
+        SleepAlertManager.testSleepAlert(this)
         
-        val notification = androidx.core.app.NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("🚨 TEST SLEEP ALERT 🚨")
-            .setContentText("This is a test sleep alert notification")
-            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_MAX)
-            .setDefaults(androidx.core.app.NotificationCompat.DEFAULT_ALL)
-            .setSound(soundUri)
-            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000))
-            .setLights(android.graphics.Color.RED, 500, 500)
-            .setAutoCancel(true)
-            .setCategory(androidx.core.app.NotificationCompat.CATEGORY_ALARM)
-            .setOngoing(true)
-            .setTimeoutAfter(10000) // 10 seconds timeout
-            .build()
-        
-        notificationManager.notify(999, notification)
-        
-        android.widget.Toast.makeText(this, "Test notification sent with sound: $soundUri", android.widget.Toast.LENGTH_LONG).show()
+        android.widget.Toast.makeText(this, "Full-screen sleep alert triggered!", android.widget.Toast.LENGTH_LONG).show()
     }
 }
 

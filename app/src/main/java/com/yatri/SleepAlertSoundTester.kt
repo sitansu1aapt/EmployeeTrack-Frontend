@@ -27,14 +27,11 @@ object SleepAlertSoundTester {
             return
         }
         
-        // Test custom sound file
-        testCustomSound(context)
+        // Test the new full-screen sleep alert system
+        SleepAlertManager.testSleepAlert(context)
         
-        // Test default alarm sound
-        testDefaultAlarmSound(context)
-        
-        // Test notification channel
-        testNotificationChannel(context)
+        Toast.makeText(context, "Full-screen sleep alert triggered!", Toast.LENGTH_LONG).show()
+        Log.d(TAG, "Full-screen sleep alert test completed")
     }
     
     private fun testCustomSound(context: Context) {

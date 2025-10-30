@@ -69,6 +69,7 @@ class MyMessagingService : FirebaseMessagingService() {
     }
 
     private fun showSleepAlert(message: RemoteMessage) {
+        android.util.Log.d("FCM", "=== SHOW SLEEP ALERT ===")
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = ensureAlertChannel(manager)
 
@@ -81,8 +82,11 @@ class MyMessagingService : FirebaseMessagingService() {
             putExtra("options", message.data["options"] ?: "[]")
             putExtra("duration_seconds", message.data["duration_seconds"]?.toIntOrNull() ?: 30)
         }
+        android.util.Log.d("FCM", "Created intent with ${intent.extras?.size()} extras")
 
-        val pi = PendingIntent.getActivity(this, 101, intent, PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0))
+        val piFlags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
+        val pi = PendingIntent.getActivity(this, 101, intent, piFlags)
+        android.util.Log.d("FCM", "PendingIntent created with flags: $piFlags")
 
         // Try to bring UI up immediately if app is foreground
         try { startActivity(intent) } catch (_: Exception) {}
@@ -130,12 +134,13 @@ interface UsersApi { @retrofit2.http.PUT("users/me/fcm-token") suspend fun updat
 
 private fun Context.ensureAlertChannel(nm: NotificationManager): String {
     // Bump channel id to force devices to pick up custom sound and importance changes
-    val channelId = "alerts_v4"
+    val channelId = "alerts_v5"
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         // Clean up older channels
         try { nm.deleteNotificationChannel("alerts") } catch (_: Exception) {}
         try { nm.deleteNotificationChannel("alerts_v2") } catch (_: Exception) {}
         try { nm.deleteNotificationChannel("alerts_v3") } catch (_: Exception) {}
+        try { nm.deleteNotificationChannel("alerts_v4") } catch (_: Exception) {}
         
         val existing = nm.getNotificationChannel(channelId)
         if (existing == null) {
@@ -153,7 +158,7 @@ private fun Context.ensureAlertChannel(nm: NotificationManager): String {
                 android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
             }
             
-            val ch = NotificationChannel(channelId, "Critical Sleep Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+            val ch = NotificationChannel(channelId, "Critical Sleep Alerts", NotificationManager.IMPORTANCE_MAX).apply {
                 enableLights(true)
                 lightColor = Color.RED
                 enableVibration(true)

@@ -3,6 +3,7 @@ package com.yatri.sleep
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.PowerManager
 import android.app.KeyguardManager
 import android.view.WindowManager
 import android.media.MediaPlayer
@@ -43,9 +44,24 @@ class QuestionActivity : AppCompatActivity() {
     private var initialDuration: Int = 30
     private var currentTimer: Int = 30
     private var alarmPlayer: MediaPlayer? = null
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Acquire wake lock FIRST before anything else to wake the screen
+        try {
+            val powerManager = getSystemService(PowerManager::class.java)
+            wakeLock = powerManager?.newWakeLock(
+                PowerManager.FULL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP or PowerManager.ON_AFTER_RELEASE,
+                "Yatri:SleepAlert"
+            )
+            wakeLock?.acquire(30000) // Wake for 30 seconds
+            android.util.Log.d("QuestionActivity", "Wake lock acquired")
+        } catch (e: Exception) {
+            android.util.Log.e("QuestionActivity", "Failed to acquire wake lock", e)
+        }
+        
         setContentView(R.layout.activity_question)
 
         // Ensure auth token is available for API (load from DataStore if app was cold-started)
@@ -181,6 +197,12 @@ class QuestionActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         stopAlarmSound()
+        // Release wake lock
+        try {
+            wakeLock?.let { if (it.isHeld) it.release() }
+        } catch (e: Exception) {
+            android.util.Log.e("QuestionActivity", "Failed to release wake lock", e)
+        }
         super.onDestroy()
     }
 

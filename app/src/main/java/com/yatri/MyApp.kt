@@ -6,6 +6,9 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         AppContext.context = applicationContext
+        
+        // Initialize Sleep Alert Manager
+        SleepAlertManager.initialize(this)
     }
 }
 

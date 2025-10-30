@@ -78,7 +78,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilLanguage"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    style="@style/CustomExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -89,6 +89,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="none"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary"
                         android:hint="Select language"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -103,7 +105,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilIdentifierType"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    style="@style/CustomExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -114,6 +116,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="none"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary"
                         android:hint="Select type"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -132,6 +136,8 @@
                     android:hint="Enter Employee ID"
                     android:padding="16dp"
                     android:background="@drawable/bg_input"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_secondary"
                     android:inputType="text"/>
 
                 <TextView
@@ -144,7 +150,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilPassword"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    style="@style/CustomTextInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="0dp"
@@ -154,6 +160,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Enter Password"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary"
                         android:inputType="textPassword"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
