@@ -3,7 +3,11 @@ package com.yatri.sleep
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.app.KeyguardManager
 import android.view.WindowManager
+import android.media.MediaPlayer
+import android.media.AudioAttributes
+import android.net.Uri
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -38,6 +42,7 @@ class QuestionActivity : AppCompatActivity() {
     private var selectedButton: Button? = null
     private var initialDuration: Int = 30
     private var currentTimer: Int = 30
+    private var alarmPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +66,15 @@ class QuestionActivity : AppCompatActivity() {
                         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
             )
         }
+
+        // Request keyguard dismissal so UI is immediately interactable on lock screen
+        try {
+            val kgm = getSystemService(KeyguardManager::class.java)
+            kgm?.requestDismissKeyguard(this, null)
+        } catch (_: Exception) { }
+
+        // Start continuous alarm sound similar to React Native behavior
+        startAlarmSound()
 
         val sessionId = intent.getStringExtra("session_id") ?: ""
         val questionId = intent.getStringExtra("question_id") ?: ""
@@ -108,14 +122,66 @@ class QuestionActivity : AppCompatActivity() {
             }
             override fun onFinish() { 
                 currentTimer = 0
+                stopAlarmSound()
                 submit(sessionId, questionId, selectedOption) 
             }
         }.start()
 
         findViewById<Button>(R.id.btnSubmit).setOnClickListener {
             android.util.Log.d("QuestionActivity", "Submit clicked with selectedOption=$selectedOption")
+            stopAlarmSound()
             submit(sessionId, questionId, selectedOption)
         }
+    }
+
+    private fun startAlarmSound() {
+        try {
+            // Prefer custom sleep_alert sound if present
+            val resId = resources.getIdentifier("sleep_alert", "raw", packageName)
+            val uri: Uri = if (resId != 0) {
+                Uri.parse("android.resource://$packageName/$resId")
+            } else {
+                android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+            }
+
+            val player = MediaPlayer()
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                player.setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                player.setAudioStreamType(android.media.AudioManager.STREAM_ALARM)
+            }
+            player.isLooping = true
+            player.setDataSource(this, uri)
+            player.setVolume(1f, 1f)
+            player.prepare()
+            player.start()
+            alarmPlayer = player
+            android.util.Log.d("QuestionActivity", "Alarm sound started (looping)")
+        } catch (e: Exception) {
+            android.util.Log.e("QuestionActivity", "Failed to start alarm sound: ${e.message}")
+        }
+    }
+
+    private fun stopAlarmSound() {
+        try {
+            alarmPlayer?.let { p ->
+                if (p.isPlaying) p.stop()
+                p.reset()
+                p.release()
+            }
+        } catch (_: Exception) { }
+        alarmPlayer = null
+    }
+
+    override fun onDestroy() {
+        stopAlarmSound()
+        super.onDestroy()
     }
 
     private fun submit(sessionId: String, questionId: String, optionId: String?) {

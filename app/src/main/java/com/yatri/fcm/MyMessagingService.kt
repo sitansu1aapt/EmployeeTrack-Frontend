@@ -1,5 +1,6 @@
 package com.yatri.fcm
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -104,6 +105,7 @@ class MyMessagingService : FirebaseMessagingService() {
             .setContentTitle("🚨 SLEEP ALERT 🚨")
             .setContentText(message.data["question_text"] ?: "IMMEDIATE RESPONSE REQUIRED")
             .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setSound(soundUri)
             .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000))
@@ -127,12 +129,13 @@ interface UsersApi { @retrofit2.http.PUT("users/me/fcm-token") suspend fun updat
 
 
 private fun Context.ensureAlertChannel(nm: NotificationManager): String {
-    // Bump channel id to force devices to pick up custom sound changes
-    val channelId = "alerts_v3"
+    // Bump channel id to force devices to pick up custom sound and importance changes
+    val channelId = "alerts_v4"
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         // Clean up older channels
         try { nm.deleteNotificationChannel("alerts") } catch (_: Exception) {}
         try { nm.deleteNotificationChannel("alerts_v2") } catch (_: Exception) {}
+        try { nm.deleteNotificationChannel("alerts_v3") } catch (_: Exception) {}
         
         val existing = nm.getNotificationChannel(channelId)
         if (existing == null) {
@@ -166,6 +169,7 @@ private fun Context.ensureAlertChannel(nm: NotificationManager): String {
                 setSound(soundUri, attrs)
                 setBypassDnd(true)
                 setShowBadge(true)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             nm.createNotificationChannel(ch)
             android.util.Log.d("FCM", "Created notification channel: $channelId with sound: $soundUri")
