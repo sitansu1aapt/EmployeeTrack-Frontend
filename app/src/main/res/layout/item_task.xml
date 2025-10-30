@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginBottom="16dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="3dp">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
+        android:background="@color/cardBackground"
+        android:foreground="?attr/selectableItemBackground">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="20dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,7 +28,9 @@
                 android:text="Task Title"
                 android:textStyle="bold"
                 android:textSize="18sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:letterSpacing="0.02"
+                android:fontFamily="sans-serif-medium" />
                         <TextView
                                 android:id="@+id/tvPriority"
                                 android:layout_width="wrap_content"
@@ -34,11 +38,16 @@
                                 android:text="HIGH"
                                 android:textColor="@android:color/white"
                                 android:background="@drawable/bg_priority_high"
-                                android:paddingHorizontal="8dp"
-                                android:paddingVertical="4dp"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="6dp"
                                 android:textStyle="bold"
-                                android:textSize="12sp"
-                                android:layout_marginStart="8dp" />
+                                android:textSize="13sp"
+                                android:layout_marginStart="8dp"
+                                android:fontFamily="sans-serif-medium"
+                                android:letterSpacing="0.03"
+                                android:layout_gravity="center_vertical"
+                                android:backgroundTint="@color/priorityHighBg"
+                                />
         </LinearLayout>
 
         <TextView
@@ -46,10 +55,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Task description goes here."
-            android:textSize="14sp"
-                android:textColor="@color/textLight"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="10dp" />
+                        android:textSize="15sp"
+                        android:textColor="@color/textLight"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="12dp"
+                        android:fontFamily="sans-serif" />
 
         <LinearLayout
                 android:layout_width="match_parent"
@@ -67,7 +77,8 @@
                     android:text="Due: 2025-10-15"
                     android:textSize="14sp"
                     android:textColor="@color/textLight"
-                    android:layout_marginStart="8dp" />
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="sans-serif" />
         </LinearLayout>
 
         <LinearLayout
@@ -87,7 +98,8 @@
                     android:text="Assigned by: John Doe"
                     android:textSize="14sp"
                     android:textColor="@color/textLight"
-                    android:layout_marginStart="8dp" />
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="sans-serif" />
         </LinearLayout>
 
         <LinearLayout
@@ -107,7 +119,8 @@
                     android:text="john@example.com"
                     android:textSize="14sp"
                     android:textColor="@color/textLight"
-                    android:layout_marginStart="8dp" />
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="sans-serif" />
         </LinearLayout>
 
         <LinearLayout
@@ -123,11 +136,16 @@
                     android:text="ASSIGNED"
                     android:textColor="@android:color/white"
                     android:background="@drawable/bg_status_badge"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
                     android:textStyle="bold"
-                    android:textSize="12sp" />
-            <Button
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="0.03"
+                    android:layout_gravity="center_vertical"
+                    android:backgroundTint="@color/statusBadgeBg"
+                    />
+                                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAction"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -137,10 +155,14 @@
                     android:visibility="gone"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="6dp"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="10dp"
                     android:textStyle="bold"
-                    app:cornerRadius="12dp" />
+                    android:fontFamily="sans-serif-medium"
+                    android:elevation="2dp"
+                    app:cornerRadius="16dp"
+                    android:letterSpacing="0.04"
+                    android:background="@drawable/bg_button_gradient" />
         </LinearLayout>
 
         <!-- File Attachment Section -->

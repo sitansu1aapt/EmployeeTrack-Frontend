@@ -90,7 +90,7 @@ class TasksFragment : Fragment() {
         spinnerFilter.adapter = filterAdapter
         
         // Setup sort spinner
-        val sortItems = arrayOf("Due Date", "Priority")
+        val sortItems = arrayOf("Priority","Due Date")
         val sortAdapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, sortItems)
         sortAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerSort.adapter = sortAdapter
@@ -303,12 +303,18 @@ class TasksFragment : Fragment() {
                 it.taskStatus == filterValue || it.taskPriority.equals(filterValue, ignoreCase = true)
             }
         }
-        val sortValue = spinnerSort.selectedItem?.toString() ?: "Due Date"
-        filtered = when (sortValue) {
-            "Due Date" -> filtered.sortedBy { it.taskDueDate }
-            "Priority" -> filtered.sortedBy { priorityOrder(it.taskPriority) }
-            else -> filtered
-        }
+        // Custom status order: ASSIGNED, IN_PROGRESS, VERIFICATION_PENDING, COMPLETED
+        val statusOrder = mapOf(
+            "ASSIGNED" to 1,
+            "IN_PROGRESS" to 2,
+            "VERIFICATION_PENDING" to 3,
+            "COMPLETED" to 4
+        )
+        val sortValue = spinnerSort.selectedItem?.toString() ?: "Priority"
+        filtered = filtered.sortedWith(compareBy(
+            { statusOrder[it.taskStatus] ?: 99 },
+            { if (sortValue == "Priority") priorityOrder(it.taskPriority) else it.taskDueDate }
+        ))
         adapter.updateData(filtered)
     }
 
