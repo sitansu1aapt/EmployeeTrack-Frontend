@@ -41,15 +41,37 @@ class AttendanceAdapter(private val items: List<AttendanceItem>) : RecyclerView.
             } catch (e: Exception) { "--" }
             tvDate.text = formattedDate
 
-            // Format time: "2025-10-27T11:41:34.846Z" -> "5:11 pm"
+            // Format time to match React Native formatTime12h function exactly
             fun formatTime(iso: String?): String {
                 if (iso.isNullOrEmpty()) return "--"
                 return try {
-                    val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US)
-                    val outFormat = java.text.SimpleDateFormat("h:mm a", java.util.Locale.US)
+                    // Parse UTC timestamp properly (like React Native's new Date(utcDateString))
+                    val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale("en", "IN"))
+                    isoFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    
                     val date = isoFormat.parse(iso)
-                    outFormat.format(date)
-                } catch (e: Exception) { "--" }
+                    if (date == null) return "--"
+                    
+                    // Convert to Asia/Kolkata timezone like React Native
+                    val formatter = java.text.SimpleDateFormat("h:mm a", java.util.Locale("en", "IN"))
+                    formatter.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata")
+                    
+                    formatter.format(date)
+                } catch (e: Exception) {
+                    // Fallback: try parsing without milliseconds
+                    try {
+                        val fallbackFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale("en", "IN"))
+                        fallbackFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                        
+                        val date = fallbackFormat.parse(iso)
+                        if (date == null) return "--"
+                        
+                        val formatter = java.text.SimpleDateFormat("h:mm a", java.util.Locale("en", "IN"))
+                        formatter.timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata")
+                        
+                        formatter.format(date)
+                    } catch (e2: Exception) { "--" }
+                }
             }
 
             tvCheckIn.text = "Check In: " + formatTime(item.checkIn)

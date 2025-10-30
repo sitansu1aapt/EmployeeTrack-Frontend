@@ -50,6 +50,9 @@ class DashboardFragment : Fragment() {
     private var timerHandler: Handler? = null
     private var timerRunnable: Runnable? = null
     private var isOnDuty = false
+    
+    // Location dialog reference
+    private var locationServicesDialog: AlertDialog? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_dashboard, container, false)
@@ -107,6 +110,7 @@ class DashboardFragment : Fragment() {
             prefs.edit().putBoolean(PREF_TRACKING, isChecked).apply()
 
             if (isChecked) {
+                // Check permissions first
                 val fine = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 val coarse = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 if (!fine || !coarse) {
@@ -116,6 +120,40 @@ class DashboardFragment : Fragment() {
                     prefs.edit().putBoolean(PREF_TRACKING, false).apply()
                     return@setOnCheckedChangeListener
                 }
+                
+                // Check if location services are enabled
+                val locationManager = ctx.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+                val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                
+                if (!isGpsEnabled && !isNetworkEnabled) {
+                    // Dismiss any existing dialog first
+                    locationServicesDialog?.dismiss()
+                    
+                    locationServicesDialog = AlertDialog.Builder(ctx)
+                        .setTitle("Location Services Required")
+                        .setMessage("Please enable GPS/Location services to start background tracking.")
+                        .setPositiveButton("Enable Location") { _, _ ->
+                            try {
+                                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(ctx, "Please enable Location services in Settings", android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        .setNegativeButton("Cancel") { dialog, _ ->
+                            dialog.dismiss()
+                            locationServicesDialog = null
+                        }
+                        .setOnDismissListener {
+                            locationServicesDialog = null
+                        }
+                        .show()
+                    
+                    switchView.isChecked = false
+                    prefs.edit().putBoolean(PREF_TRACKING, false).apply()
+                    return@setOnCheckedChangeListener
+                }
+                
                 android.util.Log.d("LocationService", "Starting foreground location service")
                 ctx.startForegroundService(Intent(ctx, LocationService::class.java))
                 updateBackgroundStatus(true)
@@ -225,11 +263,17 @@ class DashboardFragment : Fragment() {
     }
 
     private fun updateTimerDisplay(elapsedTimeMs: Long) {
-        val hours = (elapsedTimeMs / (1000 * 60 * 60)) % 24
-        val minutes = (elapsedTimeMs / (1000 * 60)) % 60
-        val seconds = (elapsedTimeMs / 1000) % 60
+        // Ensure elapsed time is not negative (same as React Native safety check)
+        val safeElapsedTime = kotlin.math.max(0L, elapsedTimeMs)
         
-        val timeString = String.format("  %02d:%02d:%02d", hours, minutes, seconds)
+        // Use same calculation as React Native formatDuration function
+        val totalSeconds = (safeElapsedTime / 1000).toInt()
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+        
+        // Format like React Native: "2h 15m 30s"
+        val timeString = "${hours}h ${minutes}m ${seconds}s"
         tvDutyTimer.text = timeString
     }
 
@@ -261,6 +305,9 @@ class DashboardFragment : Fragment() {
     }
     override fun onResume() {
         super.onResume()
+        // Check location services when returning to dashboard
+        checkLocationServicesEnabled()
+        
         // Restore tracking switch state
         val prefs = requireContext().getSharedPreferences(PREF_NAME, android.content.Context.MODE_PRIVATE)
         val trackingActive = prefs.getBoolean(PREF_TRACKING, false)
@@ -269,21 +316,104 @@ class DashboardFragment : Fragment() {
 
         // Refresh duty status when returning to dashboard
         fetchDutyStatusAndUpdateUI()
+        
+        // Update map location if location services are now enabled
+        updateMapLocationIfEnabled()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         // Stop timer to prevent memory leaks
         timerHandler?.removeCallbacks(timerRunnable!!)
+        
+        // Dismiss location dialog if showing to prevent memory leaks
+        locationServicesDialog?.dismiss()
+        locationServicesDialog = null
     }
 
     private fun ensureLocationPermission() {
         val ctx = requireContext()
         val fine = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val coarse = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        
         if (!fine || !coarse) {
             ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), permReq)
+            return
         }
+        
+        // Check if GPS/Location services are enabled
+        checkLocationServicesEnabled()
+    }
+    
+    private fun checkLocationServicesEnabled() {
+        val ctx = requireContext()
+        val locationManager = ctx.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        
+        if (!isGpsEnabled && !isNetworkEnabled) {
+            // Only show dialog if it's not already showing
+            if (locationServicesDialog?.isShowing != true) {
+                showLocationServicesDialog()
+            }
+        } else {
+            // Location is enabled, dismiss dialog if it's showing
+            locationServicesDialog?.dismiss()
+            locationServicesDialog = null
+            
+            // Update map location now that location services are enabled
+            updateMapLocationIfEnabled()
+        }
+    }
+    
+    private fun showLocationServicesDialog() {
+        locationServicesDialog = AlertDialog.Builder(requireContext())
+            .setTitle("Location Services Required")
+            .setMessage("Background location tracking is mandatory for this app. Please enable GPS/Location services to continue.")
+            .setPositiveButton("Enable Location") { _, _ ->
+                try {
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(requireContext(), "Please enable Location services in Settings", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                locationServicesDialog = null
+                android.widget.Toast.makeText(requireContext(), "Location services are required for background tracking", android.widget.Toast.LENGTH_LONG).show()
+            }
+            .setOnDismissListener {
+                locationServicesDialog = null
+            }
+            .setCancelable(false)
+            .show()
+    }
+    
+    private fun updateMapLocationIfEnabled() {
+        val ctx = requireContext()
+        
+        // Check if we have location permissions
+        val fine = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarse = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        
+        if (!fine || !coarse) {
+            return // No permissions, can't update location
+        }
+        
+        // Check if location services are enabled
+        val locationManager = ctx.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        
+        if (!isGpsEnabled && !isNetworkEnabled) {
+            return // Location services not enabled
+        }
+        
+        // Update map location
+        val mapFrag = childFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
+        centerToLatest(mapFrag, postToServer = false)
+        
+        android.widget.Toast.makeText(ctx, "Location updated", android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun ensureLocationReady(): Boolean {
@@ -321,6 +451,9 @@ class DashboardFragment : Fragment() {
                 }
                 view?.findViewById<TextView>(R.id.tvLatLng)?.text = "Lat: ${String.format("%.4f", lat)}, Long: ${String.format("%.4f", lng)}"
                 view?.findViewById<TextView>(R.id.tvAccuracy)?.text = "Accuracy: ${acc?.toInt() ?: 0} m"
+                
+                android.util.Log.d("DashboardLocation", "Location updated: Lat=$lat, Lng=$lng, Accuracy=${acc?.toInt() ?: 0}m")
+                
                 if (postToServer && acc != null) {
                     kotlin.concurrent.thread {
                         try {
@@ -334,10 +467,21 @@ class DashboardFragment : Fragment() {
                                 .post(body.toRequestBody("application/json".toMediaType()))
                                 .build()
                             okhttp3.OkHttpClient().newCall(req).execute().close()
-                        } catch (_: Exception) {}
+                            android.util.Log.d("DashboardLocation", "Location sent to server successfully")
+                        } catch (e: Exception) {
+                            android.util.Log.e("DashboardLocation", "Failed to send location to server", e)
+                        }
                     }
                 }
+            } else {
+                android.util.Log.w("DashboardLocation", "No location available from fused location provider")
+                view?.findViewById<TextView>(R.id.tvLatLng)?.text = "Location: Not available"
+                view?.findViewById<TextView>(R.id.tvAccuracy)?.text = "Accuracy: --"
             }
+        }.addOnFailureListener { e ->
+            android.util.Log.e("DashboardLocation", "Failed to get location", e)
+            view?.findViewById<TextView>(R.id.tvLatLng)?.text = "Location: Error"
+            view?.findViewById<TextView>(R.id.tvAccuracy)?.text = "Accuracy: --"
         }
     }
 
@@ -388,14 +532,14 @@ class DashboardFragment : Fragment() {
         this.isOnDuty = isOnDuty
         tvDutyStatus.text = if (isOnDuty) "  On Duty" else "  Off Duty"
         
-        // Handle timer
+        // Handle timer - using same approach as React Native app
         if (isOnDuty && checkInTime != null) {
             try {
-                // Parse check_in_time and start timer
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-                dateFormat.timeZone = TimeZone.getTimeZone("UTC")
-                val checkInDate = dateFormat.parse(checkInTime)
+                // Parse check_in_time using multiple formats (same as React Native)
+                val checkInDate = parseCheckInTime(checkInTime)
                 dutyStartTime = checkInDate?.time ?: System.currentTimeMillis()
+                
+                android.util.Log.d("DashboardDuty", "Timer started. CheckInTime: $checkInTime, DutyStartTime: $dutyStartTime")
                 
                 tvDutyTimer.visibility = View.VISIBLE
                 startTimer()
@@ -409,6 +553,7 @@ class DashboardFragment : Fragment() {
         } else if (isOnDuty) {
             // On duty but no check-in time, use current time
             dutyStartTime = System.currentTimeMillis()
+            android.util.Log.d("DashboardDuty", "Timer started with current time: $dutyStartTime")
             tvDutyTimer.visibility = View.VISIBLE
             startTimer()
         } else {
@@ -430,6 +575,43 @@ class DashboardFragment : Fragment() {
 
     private fun stopTimer() {
         timerHandler?.removeCallbacks(timerRunnable!!)
+    }
+    
+    private fun parseCheckInTime(checkInTime: String): java.util.Date? {
+        // React Native's new Date(utcString) automatically parses UTC strings correctly
+        // We need to match that behavior by parsing UTC timestamps as UTC
+        
+        val formats = listOf(
+            // UTC formats - these have 'Z' or timezone offset, parse as UTC
+            Triple(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US), java.util.TimeZone.getTimeZone("UTC"), true),
+            Triple(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US), java.util.TimeZone.getTimeZone("UTC"), true),
+            Triple(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US), null, true), // XXX includes timezone
+            Triple(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US), null, true),
+            // Local formats - parse as local time
+            Triple(SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US), null, false)
+        )
+        
+        for ((format, timezone, isUtc) in formats) {
+            try {
+                if (timezone != null) {
+                    format.timeZone = timezone
+                } else if (isUtc && (checkInTime.contains("Z") || checkInTime.matches(Regex(".*[+-]\\d{2}:\\d{2}")))) {
+                    // Has timezone indicator, parse as UTC
+                    format.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                }
+                val parsed = format.parse(checkInTime)
+                if (parsed != null) {
+                    android.util.Log.d("DashboardDuty", "Parsed check-in time: $checkInTime -> $parsed (${if (isUtc) "UTC" else "local"})")
+                    return parsed
+                }
+            } catch (e: Exception) {
+                // Try next format
+                continue
+            }
+        }
+        
+        android.util.Log.w("DashboardDuty", "Could not parse check-in time: $checkInTime")
+        return null
     }
 }
 

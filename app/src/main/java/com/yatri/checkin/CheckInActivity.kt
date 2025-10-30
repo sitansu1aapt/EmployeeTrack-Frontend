@@ -489,7 +489,12 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun isoNow(): String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).format(Date())
+    private fun isoNow(): String {
+        // Create proper UTC timestamp like React Native's new Date().toISOString()
+        val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale("en", "IN"))
+        formatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        return formatter.format(Date())
+    }
 }
 
 

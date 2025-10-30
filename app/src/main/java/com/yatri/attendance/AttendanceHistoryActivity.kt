@@ -7,8 +7,8 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import android.widget.ImageView
 import com.yatri.R
 
 class AttendanceHistoryActivity : AppCompatActivity() {
@@ -22,7 +22,7 @@ class AttendanceHistoryActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         val startDateEdit = findViewById<TextInputEditText>(R.id.startDateEdit)
         val endDateEdit = findViewById<TextInputEditText>(R.id.endDateEdit)
-        val btnRefresh = findViewById<MaterialButton>(R.id.btnRefresh)
+        val btnRefresh = findViewById<ImageView>(R.id.btnRefresh)
         val tvTotalDays = findViewById<TextView>(R.id.tvTotalDays)
         val tvPresent = findViewById<TextView>(R.id.tvPresent)
         val tvAbsent = findViewById<TextView>(R.id.tvAbsent)

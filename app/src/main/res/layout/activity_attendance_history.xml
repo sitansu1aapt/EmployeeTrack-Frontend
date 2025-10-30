@@ -45,19 +45,18 @@
                 android:layout_weight="1"
                 android:hint="End Date"
                 android:focusable="false" />
-            <com.google.android.material.button.MaterialButton
+            <ImageView
                 android:id="@+id/btnRefresh"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:icon="@drawable/ic_refresh"
-                android:backgroundTint="@color/blue_500"
-                android:text=""
-                app:cornerRadius="24dp"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:iconTint="@color/white"
-                android:elevation="4dp"
-                android:layout_marginStart="8dp" />
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_refresh"
+                android:tint="@color/blue_500"
+                android:padding="8dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_card"
+                android:contentDescription="Refresh"
+                android:clickable="true"
+                android:focusable="true" />
         </LinearLayout>
 
         <androidx.cardview.widget.CardView
