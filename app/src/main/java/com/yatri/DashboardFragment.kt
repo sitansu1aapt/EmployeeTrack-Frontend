@@ -53,18 +53,32 @@ class DashboardFragment : Fragment() {
     
     // Location dialog reference
     private var locationServicesDialog: AlertDialog? = null
+    private var locationReady = false
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == permReq) {
+            // If any permission is denied, close the app immediately
+            if (grantResults.isEmpty() || grantResults.any { it != PackageManager.PERMISSION_GRANTED }) {
+                activity?.finishAffinity()
+                return
+            }
+            ensureLocationPermission()
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_dashboard, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        locationReady = false
         super.onViewCreated(view, savedInstanceState)
         initializeViews(view)
         setupClickListeners(view)
         setupSwipeRefresh()
         setupTimer()
         ensureLocationPermission()
+        blockDashboardIfLocationNotReady(view)
         setupMapFragment(view)
 
         // Restore tracking switch state
@@ -251,6 +265,30 @@ class DashboardFragment : Fragment() {
             .show()
     }
 
+    // Block all dashboard actions if location is not ready
+    private fun blockDashboardIfLocationNotReady(view: View) {
+        val btns = listOf(
+            view.findViewById<Button>(R.id.btnCheckIn),
+            view.findViewById<Button>(R.id.btnCheckOut),
+            view.findViewById<Button>(R.id.btnPatrols)
+        )
+        btns.forEach { it?.isEnabled = false; it?.alpha = 0.5f }
+        view.findViewById<Switch>(R.id.swBackground)?.isEnabled = false
+        view.findViewById<View>(R.id.cardAttendance)?.isEnabled = false
+        // Optionally show a message
+        view.findViewById<TextView?>(R.id.tvDutyStatus)?.text = "Enable location to use app"
+    }
+    private fun unblockDashboard(view: View) {
+        val btns = listOf(
+            view.findViewById<Button>(R.id.btnCheckIn),
+            view.findViewById<Button>(R.id.btnCheckOut),
+            view.findViewById<Button>(R.id.btnPatrols)
+        )
+        btns.forEach { it?.isEnabled = true; it?.alpha = 1f }
+        view.findViewById<Switch>(R.id.swBackground)?.isEnabled = true
+        view.findViewById<View>(R.id.cardAttendance)?.isEnabled = true
+        fetchDutyStatusAndUpdateUI()
+    }
     // Update UI Methods
     private fun updateBackgroundStatus(isActive: Boolean) {
         tvBackgroundStatus.text = if (isActive) "Active" else "Inactive"
@@ -304,6 +342,7 @@ class DashboardFragment : Fragment() {
         }
     }
     override fun onResume() {
+        locationReady = false
         super.onResume()
         // Check location services when returning to dashboard
         checkLocationServicesEnabled()
@@ -332,12 +371,14 @@ class DashboardFragment : Fragment() {
     }
 
     private fun ensureLocationPermission() {
+        locationReady = false
         val ctx = requireContext()
         val fine = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val coarse = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
         
         if (!fine || !coarse) {
             ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), permReq)
+            // keep locationReady false
             return
         }
         
@@ -346,6 +387,7 @@ class DashboardFragment : Fragment() {
     }
     
     private fun checkLocationServicesEnabled() {
+        val activity = activity
         val ctx = requireContext()
         val locationManager = ctx.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
         val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
@@ -356,17 +398,22 @@ class DashboardFragment : Fragment() {
             if (locationServicesDialog?.isShowing != true) {
                 showLocationServicesDialog()
             }
+            locationReady = false
+            blockDashboardIfLocationNotReady(view ?: return)
         } else {
             // Location is enabled, dismiss dialog if it's showing
             locationServicesDialog?.dismiss()
             locationServicesDialog = null
-            
+            locationReady = true
+            unblockDashboard(view ?: return)
             // Update map location now that location services are enabled
             updateMapLocationIfEnabled()
         }
     }
     
     private fun showLocationServicesDialog() {
+        val activity = activity
+        val frag = this
         locationServicesDialog = AlertDialog.Builder(requireContext())
             .setTitle("Location Services Required")
             .setMessage("Background location tracking is mandatory for this app. Please enable GPS/Location services to continue.")
@@ -381,9 +428,11 @@ class DashboardFragment : Fragment() {
                 dialog.dismiss()
                 locationServicesDialog = null
                 android.widget.Toast.makeText(requireContext(), "Location services are required for background tracking", android.widget.Toast.LENGTH_LONG).show()
+                activity?.finishAffinity() // Close app if user cancels
             }
             .setOnDismissListener {
                 locationServicesDialog = null
+                activity?.finishAffinity() // Close app if dialog dismissed
             }
             .setCancelable(false)
             .show()
