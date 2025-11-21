@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:text="ORGANIZATION_ADMIN"
-                android:textColor="#7A8A99"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
             <TextView
                 android:id="@+id/tvUserId"
@@ -44,7 +44,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:text="id: 1336"
-                android:textColor="#7A8A99"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
@@ -86,14 +86,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Email"
-                        android:textColor="#5F6C7B"/>
+                        android:textColor="@color/text_secondary"/>
                     <TextView
                         android:id="@+id/tvEmail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="db@gmail.com"
                         android:textSize="16sp"
-                        android:textColor="#0F172A"/>
+                        android:textColor="@color/text_primary"/>
                 </LinearLayout>
             </LinearLayout>
             <View
@@ -124,14 +124,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Department"
-                        android:textColor="#5F6C7B"/>
+                        android:textColor="@color/text_secondary"/>
                     <TextView
                         android:id="@+id/tvDepartment"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Not Assigned"
                         android:textSize="16sp"
-                        android:textColor="#0F172A"/>
+                        android:textColor="@color/text_primary"/>
                 </LinearLayout>
             </LinearLayout>
             <View
@@ -162,14 +162,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Organization"
-                        android:textColor="#5F6C7B"/>
+                        android:textColor="@color/text_secondary"/>
                     <TextView
                         android:id="@+id/tvOrganization"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Employee @ OrgID 1"
                         android:textSize="16sp"
-                        android:textColor="#0F172A"/>
+                        android:textColor="@color/text_primary"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -223,6 +223,14 @@
                 android:layout_height="48dp"
                 android:text="Update FCM Token"
                 android:drawableLeft="@drawable/ic_refresh"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnTestNotification"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Test Notification"
+                android:drawableLeft="@drawable/ic_message_notification"
                 android:layout_marginBottom="8dp" />
 
             <Button

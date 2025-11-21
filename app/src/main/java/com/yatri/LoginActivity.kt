@@ -25,6 +25,9 @@ import retrofit2.create
 import java.util.Locale
 import kotlin.coroutines.resume
 
+import com.yatri.analytics.Analytics
+import com.yatri.UserContext
+
 class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -152,11 +155,25 @@ class LoginActivity : AppCompatActivity() {
                             ?: resp.user?.id
                             ?: "Employee"
                         it[PrefKeys.USER_NAME] = displayName
+                        it[PrefKeys.USER_ID] = resp.user?.id ?: ""
+                        it[PrefKeys.USER_EMAIL] = resp.user?.email ?: ""
                         if (!resp.roles.isNullOrEmpty()) {
                             it[PrefKeys.ACTIVE_ROLE_ID] = resp.roles.first().role_id.toString()
                             it[PrefKeys.ACTIVE_ROLE_NAME] = resp.roles.first().role_name
                         }
                     }
+                    // Update in-memory context for logging
+                    UserContext.userId = resp.user?.id
+                    UserContext.userEmail = resp.user?.email
+                    UserContext.userName = resp.user?.full_name ?: UserContext.userEmail ?: "Employee"
+                    UserContext.roleName = resp.roles.firstOrNull()?.role_name
+                    // Analytics: set user + log success
+                    Analytics.setUser(resp.user?.id ?: resp.user?.email, resp.roles.firstOrNull()?.role_name)
+                    Analytics.log("login_success", mapOf(
+                        "method" to identifierType,
+                        "user_id_present" to (resp.user?.id != null),
+                        "role" to (resp.roles.firstOrNull()?.role_name ?: "")
+                    ) + Analytics.nowParams())
                     Toast.makeText(this@LoginActivity, "Login success", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this@LoginActivity, EmployeeActivity::class.java))
                     finish()
@@ -166,6 +183,11 @@ class LoginActivity : AppCompatActivity() {
                     android.util.Log.e("LoginActivity", "Error Type: ${e.javaClass.simpleName}")
                     android.util.Log.e("LoginActivity", "Error Message: ${e.message}")
                     android.util.Log.e("LoginActivity", "Error Details:", e)
+                    // Analytics: log error
+                    Analytics.log("login_error", mapOf(
+                        "method" to (acType.text?.toString() ?: ""),
+                        "message" to (e.message?.take(100) ?: "error")
+                    ) + Analytics.nowParams())
                     Toast.makeText(this@LoginActivity, e.message ?: "Login failed", Toast.LENGTH_LONG).show()
                 }
             }

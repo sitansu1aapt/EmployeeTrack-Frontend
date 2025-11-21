@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
     <uses-permission android:name="android.permission.SHOW_WHEN_LOCKED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     
     <!-- Additional permissions for device compatibility -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
@@ -119,6 +120,16 @@
         <activity
             android:name=".attendance.AttendanceHistoryActivity"
             android:exported="false"/>
+        <activity
+            android:name=".NotificationTestActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".FullScreenTestActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <service
             android:name=".fcm.MyMessagingService"

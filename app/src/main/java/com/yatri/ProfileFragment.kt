@@ -60,6 +60,10 @@ class ProfileFragment : Fragment() {
         view.findViewById<Button>(R.id.btnUpdateFcm)?.setOnClickListener {
             android.widget.Toast.makeText(requireContext(), "Update FCM Token: Coming soon", android.widget.Toast.LENGTH_SHORT).show()
         }
+        // Test Notification
+        view.findViewById<Button>(R.id.btnTestNotification)?.setOnClickListener {
+            startActivity(Intent(requireContext(), NotificationTestActivity::class.java))
+        }
         // Logout
         view.findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
             lifecycleScope.launch {
@@ -126,7 +130,20 @@ class ProfileFragment : Fragment() {
                             it[PrefKeys.USER_NAME] = profileData.data.user.full_name
                             it[PrefKeys.ACTIVE_ROLE_ID] = profileData.data.auth.roleId
                             it[PrefKeys.ACTIVE_ROLE_NAME] = profileData.data.user.activeContext.roleName
+                            it[PrefKeys.ORG_ID] = profileData.data.user.organization_id
+                            it[PrefKeys.SITE_ID] = profileData.data.user.activeContext.scopedSiteId ?: ""
+                            it[PrefKeys.DEPT_ID] = profileData.data.user.department_id ?: ""
+                            it[PrefKeys.USER_ID] = profileData.data.user.user_id
+                            it[PrefKeys.USER_EMAIL] = profileData.data.user.email
                         }
+                        // Update in-memory user context
+                        com.yatri.UserContext.userId = profileData.data.user.user_id
+                        com.yatri.UserContext.userEmail = profileData.data.user.email
+                        com.yatri.UserContext.userName = profileData.data.user.full_name
+                        com.yatri.UserContext.roleName = profileData.data.user.activeContext.roleName
+                        com.yatri.UserContext.orgId = profileData.data.user.organization_id
+                        com.yatri.UserContext.siteId = profileData.data.user.activeContext.scopedSiteId
+                        com.yatri.UserContext.deptId = profileData.data.user.department_id
                     } else {
                         android.util.Log.e("ProfileFragment", "Profile API returned success=false")
                         android.util.Log.e("ProfileFragment", "Message: ${profileData?.message}")

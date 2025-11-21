@@ -162,7 +162,7 @@
                 android:id="@+id/btnPatrols"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:text="Patrols"
+                android:text="Roving"
                 android:icon="@drawable/ic_patrols"
                 style="@style/Widget.MaterialComponents.Button"
                 android:backgroundTint="@color/blue_500"

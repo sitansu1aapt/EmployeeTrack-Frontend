@@ -240,7 +240,7 @@ class ActivePatrolActivity : AppCompatActivity() {
         android.util.Log.d(TAG, "Android Version: ${android.os.Build.VERSION.RELEASE}")
         
         runOnUiThread {
-            Toast.makeText(this@ActivePatrolActivity, "Initializing camera...", Toast.LENGTH_SHORT).show()
+          //  Toast.makeText(this@ActivePatrolActivity, "Initializing camera...", Toast.LENGTH_SHORT).show()
         }
         
         val cameraProviderFuture: ListenableFuture<ProcessCameraProvider> = ProcessCameraProvider.getInstance(this)
@@ -289,7 +289,7 @@ class ActivePatrolActivity : AppCompatActivity() {
                 android.util.Log.d(TAG, "Camera bound successfully")
                 
                 runOnUiThread {
-                    Toast.makeText(this@ActivePatrolActivity, "Camera ready. Point at QR code", Toast.LENGTH_SHORT).show()
+                   // Toast.makeText(this@ActivePatrolActivity, "Camera ready. Point at QR code", Toast.LENGTH_SHORT).show()
                 }
                 
             } catch (e: Exception) {
@@ -330,7 +330,7 @@ class ActivePatrolActivity : AppCompatActivity() {
                     cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer)
                     
                     runOnUiThread {
-                        Toast.makeText(this@ActivePatrolActivity, "Fallback camera initialized", Toast.LENGTH_SHORT).show()
+                      //  Toast.makeText(this@ActivePatrolActivity, "Fallback camera initialized", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     android.util.Log.e(TAG, "Fallback camera also failed", e)
@@ -400,7 +400,7 @@ class ActivePatrolActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 runOnUiThread {
-                    Toast.makeText(this@ActivePatrolActivity, "Sending scan to server...", Toast.LENGTH_SHORT).show()
+                   // Toast.makeText(this@ActivePatrolActivity, "Sending scan to server...", Toast.LENGTH_SHORT).show()
                 }
                 val api = Network.retrofit.create<PatrolApi>()
                 val resp = api.scanCheckpoint(sessionId!!, roleId!!, payload)
@@ -527,7 +527,7 @@ class ActivePatrolActivity : AppCompatActivity() {
             }
 
             if (!toastShown && frameCount == 1) {
-                showToastOnMainThread("Scanner initialized. Looking for QR code...")
+                //showToastOnMainThread("Scanner initialized. Looking for QR code...")
                 toastShown = true
             }
 
@@ -568,7 +568,8 @@ class ActivePatrolActivity : AppCompatActivity() {
                 if (results.isNotEmpty()) {
                     val qrData = results.first()
                     android.util.Log.i(TAG, "QRCodeAnalyzer: SUCCESS! Found QR code: $qrData")
-                    showToastOnMainThread("QR code detected!")
+                  //  showToastOnMainThread("QR code detected!")
+                  //  showToastOnMainThread("QR code detected!")
                     found = true
                     onQrFound(qrData)
                     reader.reset()

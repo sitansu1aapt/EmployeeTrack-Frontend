@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@color/background">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Custom Ringtone Issue?"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your custom ringtone might be affecting notification sounds. Reset it to default to fix this."
+        android:textColor="@color/text_secondary"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnResetDefault"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Reset to default ringtone" />
+
+    <Button
+        android:id="@+id/btnOpenChannel"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Open channel settings"
+        android:layout_marginTop="8dp" />
+</LinearLayout>
+
+

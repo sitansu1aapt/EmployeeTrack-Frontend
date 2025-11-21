@@ -12,7 +12,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Today's Patrols"
+            android:text="Today's Roving"
             android:textStyle="bold"
             android:textSize="22sp"/>
 
@@ -34,7 +34,7 @@
             android:id="@+id/emptyPlanned"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No patrols in this category."
+            android:text="No Rovings in this category."
             android:layout_marginTop="8dp"/>
 
         <!-- In Progress Section -->
@@ -55,7 +55,7 @@
             android:id="@+id/emptyInProgress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No patrols in this category."
+            android:text="No rovings in this category."
             android:layout_marginTop="8dp"/>
 
         <!-- History Section -->
@@ -76,7 +76,7 @@
             android:id="@+id/emptyHistory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No patrols in this category."
+            android:text="No Rovings in this category."
             android:layout_marginTop="8dp"/>
 
     </LinearLayout>

@@ -135,7 +135,7 @@
                     android:layout_height="56dp"
                     android:hint="Enter Employee ID"
                     android:padding="16dp"
-                    android:background="@drawable/bg_input"
+                    android:background="@color/card_bg"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_secondary"
                     android:inputType="text"/>
@@ -162,6 +162,7 @@
                         android:hint="Enter Password"
                         android:textColor="@color/text_primary"
                         android:textColorHint="@color/text_secondary"
+                        android:background="@color/card_bg"
                         android:inputType="textPassword"/>
                 </com.google.android.material.textfield.TextInputLayout>
 

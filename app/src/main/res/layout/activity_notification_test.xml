@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Checking all settings"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+        <Button
+            android:id="@+id/btnClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Close" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Let's make sure you are receiving notifications"
+        android:textColor="@color/text_secondary" />
+
+    <include
+        android:id="@+id/rowNetwork"
+        layout="@layout/item_check_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+
+    <include
+        android:id="@+id/rowNotif"
+        layout="@layout/item_check_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btnRequestNotif"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Enable Notifications"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/rowBattery"
+        layout="@layout/item_check_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btnFixBattery"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Disable Battery Optimization"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/rowPowerSaver"
+        layout="@layout/item_check_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btnBatterySaver"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Open Battery Saver Settings"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/rowSound"
+        layout="@layout/item_check_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btnSoundSettings"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Open Sound Settings"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/rowResult"
+        layout="@layout/item_check_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="#E6E9EF" />
+
+    <Button
+        android:id="@+id/btnSendTest"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Send a Test Notification"
+        android:layout_marginTop="16dp" />
+</LinearLayout>
+
+

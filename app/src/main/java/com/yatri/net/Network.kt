@@ -14,6 +14,7 @@ import okhttp3.Interceptor
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.yatri.AppContext
+import com.yatri.UserContext
 
 object Network {
     private val json = Json { ignoreUnknownKeys = true }
@@ -60,6 +61,14 @@ object Network {
                         putInt("duration_ms", durationMs)
                         putString("connection", connection)
                         putString("connected", connected.toString())
+                        // user context
+                        putString("user_id", UserContext.userId)
+                        putString("user_email", UserContext.userEmail)
+                        putString("user_name", UserContext.userName)
+                        putString("role", UserContext.roleName)
+                        putString("organization_id", UserContext.orgId)
+                        putString("site_id", UserContext.siteId)
+                        putString("department_id", UserContext.deptId)
                     }
                     Firebase.analytics.logEvent("api_call", bundle)
                     if (response.code >= 400) {
@@ -72,6 +81,14 @@ object Network {
                             putString("error_body", errorSnippet)
                             putString("connection", connection)
                             putString("connected", connected.toString())
+                            // user context
+                            putString("user_id", UserContext.userId)
+                            putString("user_email", UserContext.userEmail)
+                            putString("user_name", UserContext.userName)
+                            putString("role", UserContext.roleName)
+                            putString("organization_id", UserContext.orgId)
+                            putString("site_id", UserContext.siteId)
+                            putString("department_id", UserContext.deptId)
                         }
                         Firebase.analytics.logEvent("api_error", eb)
                     }

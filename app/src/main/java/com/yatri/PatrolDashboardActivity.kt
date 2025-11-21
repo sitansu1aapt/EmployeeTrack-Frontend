@@ -127,12 +127,12 @@ class PatrolDashboardActivity : AppCompatActivity() {
             "PLANNED" -> {
                 tvBadge.setBackgroundResource(R.drawable.badge_planned)
                 tvSched.text = "Scheduled: ${s.scheduled_start_time ?: "--"}"
-                btnPrimary.text = "Start Patrol"
+                btnPrimary.text = "Start Roving"
                 btnSecondary.visibility = View.GONE
                 btnPrimary.setOnClickListener {
                     AlertDialog.Builder(ctx)
-                        .setTitle("Start Patrol")
-                        .setMessage("Start patrol for ${s.route_name}?")
+                        .setTitle("Start Roving")
+                        .setMessage("Start Roving for ${s.route_name}?")
                         .setPositiveButton("Start") { _, _ -> startPatrol(s) }
                         .setNegativeButton("Cancel", null)
                         .show()
@@ -155,7 +155,7 @@ class PatrolDashboardActivity : AppCompatActivity() {
                     }
                 }
                 btnSecondary.visibility = View.VISIBLE
-                btnSecondary.text = "Patrol Status"
+                btnSecondary.text = "Roving Status"
                 btnSecondary.setOnClickListener {
                     startActivity(Intent(ctx, PatrolStatusActivity::class.java).putExtra("sessionId", s.patrol_session_id))
                 }
@@ -210,8 +210,8 @@ class PatrolDashboardActivity : AppCompatActivity() {
                     
                     when (response.code()) {
                         403 -> {
-                            Log.e(TAG, "Forbidden: User doesn't have permission to start patrol")
-                            Toast.makeText(this@PatrolDashboardActivity, "You don't have permission to start patrol sessions", Toast.LENGTH_LONG).show()
+                            Log.e(TAG, "Forbidden: User doesn't have permission to start Roving")
+                            Toast.makeText(this@PatrolDashboardActivity, "You don't have permission to start Roving sessions", Toast.LENGTH_LONG).show()
                         }
                         401 -> {
                             Log.e(TAG, "Unauthorized: Invalid or missing authentication token")
@@ -223,8 +223,8 @@ class PatrolDashboardActivity : AppCompatActivity() {
                             Toast.makeText(this@PatrolDashboardActivity, "Server error: $errorMessage", Toast.LENGTH_LONG).show()
                         }
                         else -> {
-                            Log.e(TAG, "Failed to start patrol. Error code: ${response.code()} body: $errorBody")
-                            Toast.makeText(this@PatrolDashboardActivity, "Failed to start patrol. Error code: ${response.code()}", Toast.LENGTH_LONG).show()
+                            Log.e(TAG, "Failed to start Roving. Error code: ${response.code()} body: $errorBody")
+                            Toast.makeText(this@PatrolDashboardActivity, "Failed to start Roving. Error code: ${response.code()}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }

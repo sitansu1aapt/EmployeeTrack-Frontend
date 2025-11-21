@@ -17,6 +17,13 @@ object PrefKeys {
     val LANGUAGE: Preferences.Key<String> = stringPreferencesKey("language")
     val USER_NAME: Preferences.Key<String> = stringPreferencesKey("user_name")
     val ACTIVE_ROLE_NAME: Preferences.Key<String> = stringPreferencesKey("active_role_name")
+    // Analytics-related org context
+    val ORG_ID: Preferences.Key<String> = stringPreferencesKey("org_id")
+    val SITE_ID: Preferences.Key<String> = stringPreferencesKey("site_id")
+    val DEPT_ID: Preferences.Key<String> = stringPreferencesKey("dept_id")
+    // Optional identifiers
+    val USER_ID: Preferences.Key<String> = stringPreferencesKey("user_id")
+    val USER_EMAIL: Preferences.Key<String> = stringPreferencesKey("user_email")
 }
 
 

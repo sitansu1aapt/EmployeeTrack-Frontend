@@ -45,6 +45,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import com.yatri.analytics.Analytics
+import kotlinx.coroutines.flow.first
+import retrofit2.HttpException
+import java.io.IOException
+import java.net.SocketTimeoutException
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -448,6 +453,7 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun submit() {
         if (isSubmitting) return
         isSubmitting = true
+        val prefs = try { kotlinx.coroutines.runBlocking { applicationContext.dataStore.data.first() } } catch (_: Exception) { null }
         val latitude = lat
         val longitude = lng
         val accuracy = acc
@@ -473,15 +479,96 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             device_info = device,
             notes = notes.ifEmpty { null }
         )
+        // Fetch org/site/dept for analytics
+        val orgId = prefs?.get(com.yatri.PrefKeys.ORG_ID)
+        val siteId = prefs?.get(com.yatri.PrefKeys.SITE_ID)
+        val deptId = prefs?.get(com.yatri.PrefKeys.DEPT_ID)
+        // Analytics: attempt
+        Analytics.log(if (mode == "checkout") "checkout_attempt" else "checkin_attempt", mapOf(
+            "lat" to latitude,
+            "lng" to longitude,
+            "accuracy" to accuracy,
+            "has_notes" to notes.isNotEmpty(),
+            "organization_id" to (orgId ?: ""),
+            "site_id" to (siteId ?: ""),
+            "department_id" to (deptId ?: "")
+        ) + Analytics.nowParams())
+        // Aggregate attempt event (single series you can chart)
+        Analytics.log("attendance_attempt", mapOf(
+            "action" to mode,
+            "lat" to latitude,
+            "lng" to longitude,
+            "accuracy" to accuracy,
+            "organization_id" to (orgId ?: ""),
+            "site_id" to (siteId ?: ""),
+            "department_id" to (deptId ?: "")
+        ) + Analytics.nowParams())
         scope.launch(Dispatchers.IO) {
             try {
+                val start = System.currentTimeMillis()
                 val api = Network.retrofit.create<AttendanceApi>()
                 if (mode == "checkout") api.checkOut(payload) else api.checkIn(payload)
                 runOnUiThread {
                     Toast.makeText(this@CheckInActivity, "Submitted", Toast.LENGTH_SHORT).show()
+                    // Analytics: success
+                    Analytics.log(if (mode == "checkout") "checkout_success" else "checkin_success", mapOf(
+                        "lat" to latitude,
+                        "lng" to longitude,
+                        "accuracy" to accuracy,
+                        "organization_id" to (orgId ?: ""),
+                        "site_id" to (siteId ?: ""),
+                        "department_id" to (deptId ?: ""),
+                        "duration_ms" to (System.currentTimeMillis() - start)
+                    ) + Analytics.nowParams())
+                    // Aggregate success event
+                    Analytics.log("attendance_success", mapOf(
+                        "action" to mode,
+                        "lat" to latitude,
+                        "lng" to longitude,
+                        "accuracy" to accuracy,
+                        "organization_id" to (orgId ?: ""),
+                        "site_id" to (siteId ?: ""),
+                        "department_id" to (deptId ?: ""),
+                        "duration_ms" to (System.currentTimeMillis() - start)
+                    ) + Analytics.nowParams())
                     finish()
                 }
             } catch (e: Exception) {
+                // Analytics: failure
+                val errorMap = mutableMapOf<String, Any?>(
+                    "message" to (e.message?.take(200) ?: "error"),
+                    "organization_id" to (orgId ?: ""),
+                    "site_id" to (siteId ?: ""),
+                    "department_id" to (deptId ?: ""),
+                    "error_type" to e.javaClass.simpleName
+                )
+                when (e) {
+                    is HttpException -> {
+                        errorMap["http_code"] = e.code()
+                        errorMap["http_message"] = e.message()
+                        val resp = e.response()
+                        errorMap["url"] = resp?.raw()?.request?.url?.toString() ?: ""
+                        errorMap["method"] = resp?.raw()?.request?.method ?: ""
+                        val body = resp?.errorBody()?.string()?.take(500)
+                        if (!body.isNullOrBlank()) errorMap["error_body"] = body
+                    }
+                    is SocketTimeoutException -> {
+                        errorMap["timeout"] = true
+                    }
+                    is IOException -> {
+                        errorMap["network_error"] = true
+                    }
+                }
+                Analytics.log(if (mode == "checkout") "checkout_error" else "checkin_error", errorMap + Analytics.nowParams())
+                // Aggregate error event
+                Analytics.log("attendance_error", mapOf(
+                    "action" to mode,
+                    "message" to (e.message?.take(100) ?: "error"),
+                    "organization_id" to (orgId ?: ""),
+                    "site_id" to (siteId ?: ""),
+                    "department_id" to (deptId ?: ""),
+                    "error_type" to e.javaClass.simpleName
+                ) + Analytics.nowParams())
                 runOnUiThread { Toast.makeText(this@CheckInActivity, e.message ?: "Submit failed", Toast.LENGTH_LONG).show() }
             } finally {
                 isSubmitting = false

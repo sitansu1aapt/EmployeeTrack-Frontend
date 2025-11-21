@@ -31,8 +31,8 @@
     <string name="employees">Employees</string>
     <string name="locations">Locations</string>
     <string name="on_duty">On Duty</string>
-    <string name="patrol_status">Patrol Status</string>
-    <string name="active_patrol">Active Patrol</string>
+    <string name="patrol_status">Roving Status</string>
+    <string name="active_patrol">Active Roving</string>
     <string name="question_screen">Question Screen</string>
     <string name="alerts">Alerts</string>
     
