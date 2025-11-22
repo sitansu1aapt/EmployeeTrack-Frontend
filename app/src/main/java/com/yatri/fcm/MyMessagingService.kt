@@ -36,24 +36,32 @@ class MyMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
+        android.util.Log.d(
+            "FCM",
+            "onMessageReceived: from=${message.from} sentTime=${message.sentTime} type=${message.data["type"]} " +
+                "title=${message.notification?.title ?: message.data["title"]} body=${message.notification?.body ?: message.data["body"]} " +
+                "data=${message.data}"
+        )
         // Route sleep_alert directly, others show generic
         val type = message.data["type"]
-        if (type == "sleep_alert") {
-            showSleepAlert(message)
-        } else {
-            showNotification(message)
+        when (type) {
+            "sleep_alert" -> showSleepAlert(message)
+            "TASK_ASSIGNMENT" -> showTaskAssignmentNotification(message)
+            else -> showNotification(message)
         }
     }
 
     private fun showNotification(message: RemoteMessage) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = ensureAlertChannel(manager)
+        val channelId = ensureTaskChannel(manager)
+        android.util.Log.d("FCM", "showNotification: channelId=$channelId")
 
         val intent = Intent(this, EmployeeActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
         val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0))
 
         val title = message.notification?.title ?: message.data["title"] ?: "Yatri"
         val body = message.notification?.body ?: message.data["body"] ?: "New message"
+        android.util.Log.d("FCM", "showNotification: title=$title body=$body")
 
         val notif = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -66,6 +74,55 @@ class MyMessagingService : FirebaseMessagingService() {
             .build()
 
         manager.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notif)
+    }
+
+    private fun showTaskAssignmentNotification(message: RemoteMessage) {
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = ensureTaskChannel(manager)
+
+        val taskId = message.data["task_id"]
+        val assignmentId = message.data["assignment_id"]
+        val taskTitle = message.data["task_title"] ?: "Task"
+        val priority = message.data["task_priority"] ?: "NORMAL"
+        val assignedBy = message.data["assigned_by_name"] ?: "Admin"
+        android.util.Log.d("FCM", "showTaskAssignmentNotification: taskId=$taskId assignmentId=$assignmentId title=$taskTitle priority=$priority by=$assignedBy")
+
+        val openIntent = Intent(this, EmployeeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("open_tab", "tasks")
+            putExtra("task_id", taskId)
+            putExtra("assignment_id", assignmentId)
+        }
+        val piFlags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
+        val contentPi = PendingIntent.getActivity(this, 202, openIntent, piFlags)
+
+        val title = message.notification?.title ?: "New Task Assigned"
+        val body = message.notification?.body ?: "\"$taskTitle\" has been assigned to you by $assignedBy"
+
+        // For pre-O devices, set sound here as well (channel controls O+)
+        val soundUri = try {
+            val resId = resources.getIdentifier("task_notification", "raw", packageName)
+            if (resId != 0) Uri.parse("android.resource://$packageName/$resId")
+            else android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
+        } catch (_: Exception) {
+            android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
+        }
+
+        val notif = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setSound(soundUri)
+            .setAutoCancel(true)
+            .setContentIntent(contentPi)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .build()
+
+        manager.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notif)
+        android.util.Log.d("FCM", "showTaskAssignmentNotification: notified with id=auto")
     }
 
     private fun showSleepAlert(message: RemoteMessage) {
@@ -180,6 +237,48 @@ private fun Context.ensureAlertChannel(nm: NotificationManager): String {
             android.util.Log.d("FCM", "Created notification channel: $channelId with sound: $soundUri")
         } else {
             android.util.Log.d("FCM", "Notification channel already exists: $channelId")
+        }
+    }
+    return channelId
+}
+
+private fun Context.ensureTaskChannel(nm: NotificationManager): String {
+    // Bump id to force devices to pick up custom sound/importance changes
+    val channelId = "tasks_v2"
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // Clean up older task channels
+        try { nm.deleteNotificationChannel("tasks") } catch (_: Exception) {}
+        try { nm.deleteNotificationChannel("tasks_v1") } catch (_: Exception) {}
+        val existing = nm.getNotificationChannel(channelId)
+        if (existing == null) {
+            val soundUri = try {
+                val resourceId = resources.getIdentifier("task_notification", "raw", packageName)
+                if (resourceId != 0) {
+                    Uri.parse("android.resource://$packageName/$resourceId")
+                } else {
+                    android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
+                }
+            } catch (_: Exception) {
+                android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
+            }
+            val ch = NotificationChannel(channelId, "Task Updates", NotificationManager.IMPORTANCE_HIGH).apply {
+                enableLights(true)
+                lightColor = Color.BLUE
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 200, 300)
+                description = "Notifications for new task assignments and updates"
+                val attrs = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                setSound(soundUri, attrs)
+                setShowBadge(true)
+                lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+            }
+            nm.createNotificationChannel(ch)
+            android.util.Log.d("FCM", "Created task channel: $channelId with sound=$soundUri")
+        } else {
+            android.util.Log.d("FCM", "Task channel already exists: $channelId")
         }
     }
     return channelId

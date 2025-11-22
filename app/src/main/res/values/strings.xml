@@ -95,4 +95,5 @@
     <string name="quiz_option_china">China</string>
     <string name="quiz_option_pakistan">Pakistan</string>
     <string name="quiz_submit">Submit</string>
+    <string name="default_notification_channel_id">tasks_v2</string>
 </resources>

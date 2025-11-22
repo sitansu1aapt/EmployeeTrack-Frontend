@@ -60,8 +60,8 @@ class ProfileFragment : Fragment() {
         view.findViewById<Button>(R.id.btnUpdateFcm)?.setOnClickListener {
             android.widget.Toast.makeText(requireContext(), "Update FCM Token: Coming soon", android.widget.Toast.LENGTH_SHORT).show()
         }
-        // Test Notification
-        view.findViewById<Button>(R.id.btnTestNotification)?.setOnClickListener {
+        // Test Notification row
+        view.findViewById<View>(R.id.rowTestNotification)?.setOnClickListener {
             startActivity(Intent(requireContext(), NotificationTestActivity::class.java))
         }
         // Logout

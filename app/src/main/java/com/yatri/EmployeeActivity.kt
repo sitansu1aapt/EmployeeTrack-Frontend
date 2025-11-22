@@ -35,7 +35,13 @@ class EmployeeActivity : AppCompatActivity() {
             true
         }
         if (savedInstanceState == null) {
-            nav.selectedItemId = R.id.tab_dashboard
+            val open = intent?.getStringExtra("open_tab")
+            nav.selectedItemId = when (open) {
+                "tasks" -> R.id.tab_tasks
+                "messages" -> R.id.tab_messages
+                "profile" -> R.id.tab_profile
+                else -> R.id.tab_dashboard
+            }
         }
     }
 
