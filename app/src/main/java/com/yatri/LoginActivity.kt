@@ -27,6 +27,7 @@ import kotlin.coroutines.resume
 
 import com.yatri.analytics.Analytics
 import com.yatri.UserContext
+import android.os.Build
 
 class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -169,10 +170,15 @@ class LoginActivity : AppCompatActivity() {
                     UserContext.roleName = resp.roles.firstOrNull()?.role_name
                     // Analytics: set user + log success
                     Analytics.setUser(resp.user?.id ?: resp.user?.email, resp.roles.firstOrNull()?.role_name)
+                    // Track which login identifier (empId/email/phone) this user used and the device model
+                    Analytics.setUserProperty("login_id", identifier)
+                    Analytics.setUserProperty("device_model", Build.MODEL ?: "Android")
                     Analytics.log("login_success", mapOf(
                         "method" to identifierType,
                         "user_id_present" to (resp.user?.id != null),
-                        "role" to (resp.roles.firstOrNull()?.role_name ?: "")
+                        "role" to (resp.roles.firstOrNull()?.role_name ?: ""),
+                        "login_id" to identifier,
+                        "device_model" to (Build.MODEL ?: "Android")
                     ) + Analytics.nowParams())
                     Toast.makeText(this@LoginActivity, "Login success", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this@LoginActivity, EmployeeActivity::class.java))
