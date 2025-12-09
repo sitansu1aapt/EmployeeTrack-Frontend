@@ -48,8 +48,10 @@ class MyMessagingService : FirebaseMessagingService() {
             }
 
             "EMERGENCY_ALERT" -> {
+                val title = remoteMessage.notification?.title
+                val finalTitle = if (title.isNullOrBlank() || title.equals("Yatri", ignoreCase = true)) "Petuk Maharaj" else title
                 showEmergencyNotification(
-                    remoteMessage.notification?.title ?: "Emergency Alert",
+                    finalTitle,
                     remoteMessage.notification?.body ?: "Emergency assistance required"
                 )
             }
@@ -89,9 +91,12 @@ class MyMessagingService : FirebaseMessagingService() {
         val channelId = "emergency_channel"
         // Use alarm sound for emergency
         val soundUri = Uri.parse("android.resource://$packageName/${R.raw.emergency_alert}")
+        
+        val finalTitle = if (title.isNullOrBlank() || title.equals("Yatri", ignoreCase = true)) "Emergency Alert" else title
+
         createNotification(
             channelId,
-            title,
+            finalTitle,
             body,
             R.drawable.ic_emergency,
             soundUri = soundUri,
@@ -134,9 +139,13 @@ class MyMessagingService : FirebaseMessagingService() {
 
         // Use ringtone for sleep alerts (louder than notification)
         val soundUri = Uri.parse("android.resource://$packageName/${R.raw.sleep_alert}")
+        
+        val title = message.notification?.title
+        val finalTitle = if (title.isNullOrBlank() || title.equals("Yatri", ignoreCase = true)) "Sleep Tracking Alert" else title
+
         createNotification(
             channelId,
-            message.notification?.title ?: "Sleep Tracking Alert",
+            finalTitle,
             message.data["question_text"] ?: "Are you awake? Please respond.",
             R.drawable.ic_emergency_alert, // Using emergency alert icon as fallback for sleep alert
             soundUri = soundUri,
@@ -149,9 +158,15 @@ class MyMessagingService : FirebaseMessagingService() {
     private fun showDefaultNotification(message: RemoteMessage) {
         val channelId = "default_channel"
         val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        
+        var title = message.notification?.title ?: message.data["title"]
+        if (title.isNullOrBlank() || title.equals("Yatri", ignoreCase = true)) {
+            title = "Petuk Maharaj"
+        }
+
         createNotification(
             channelId,
-            message.notification?.title ?: message.data["title"] ?: "Notification",
+            title,
             message.notification?.body ?: message.data["body"] ?: "New Message",
             R.mipmap.ic_launcher,
             soundUri = soundUri,

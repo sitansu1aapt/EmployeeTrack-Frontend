@@ -53,7 +53,7 @@ class LocationService : Service() {
             nm.createNotificationChannel(NotificationChannel(channelId, "Location", NotificationManager.IMPORTANCE_LOW))
         }
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Yatri")
+            .setContentTitle("Location Update")
             .setContentText(text)
             .setSmallIcon(R.mipmap.ic_launcher)
             .build()

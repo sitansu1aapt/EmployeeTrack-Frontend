@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Dark mode overrides -->
-    <color name="card_bg">#1E1E1E</color>
+    <color name="card_bg">#2A1A1A</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B0B0B0</color>
-    <color name="background">#121212</color>
-    <color name="border">#424242</color>
+    <color name="background">#1A0F0F</color>
+    <color name="border">#4A3030</color>
     <color name="textLight">#B0B0B0</color>
-    <color name="primary">#007AFF</color>
+    <color name="primary">#D4394C</color>
+    <color name="primary_dark">#A02030</color>
     
     <!-- Quiz Colors - Dark Mode -->
     <color name="quiz_background">#1E1E1E</color>

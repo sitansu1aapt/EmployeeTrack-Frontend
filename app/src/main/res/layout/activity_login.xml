@@ -16,11 +16,20 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:padding="16dp"
-            android:background="@color/navy">
+            android:background="@color/primary">
+            
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/petuk_logo"
+                android:layout_marginStart="16dp"
+                android:contentDescription="Petuk Maharaj Logo"
+                android:scaleType="fitCenter"/>
+            
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Flying Chital"
+                android:text="Petuk Maharaj"
                 android:textColor="@color/text_on_primary"
                 android:textStyle="bold"
                 android:textSize="22sp"
@@ -192,14 +201,14 @@
                     android:textAllCaps="false"
                     android:textStyle="bold"
                     android:layout_marginTop="16dp"
-                    android:backgroundTint="@color/navy"/>
+                    android:backgroundTint="@color/primary"/>
 
                 <TextView
                     android:id="@+id/tvForgot"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Forgot Password?"
-                    android:textColor="#3A7BD5"
+                    android:textColor="@color/primary"
                     android:layout_gravity="center"
                     android:layout_marginTop="12dp"/>
 

@@ -25,6 +25,87 @@ class MyApp : Application() {
         Analytics.setUserProperty("os_version", Build.VERSION.RELEASE ?: "")
         // Ensure default notification channel exists to avoid FCM warnings
         ensureDefaultNotificationChannel()
+        // Create all custom channels for background notifications
+        createNotificationChannels()
+    }
+
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val nm = getSystemService(NotificationManager::class.java)
+
+        // Task Channel
+        val taskSound = try {
+            val resId = resources.getIdentifier("task_notification", "raw", packageName)
+            if (resId != 0) android.net.Uri.parse("android.resource://$packageName/$resId")
+            else android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
+        } catch (_: Exception) { android.provider.Settings.System.DEFAULT_NOTIFICATION_URI }
+        
+        val taskChannel = NotificationChannel("task_channel", "Task Notifications", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            description = "Notifications for new task assignments"
+            val attrs = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            setSound(taskSound, attrs)
+            enableLights(true)
+            lightColor = Color.BLUE
+            enableVibration(true)
+        }
+        nm.createNotificationChannel(taskChannel)
+
+        // Emergency Channel
+        val emergencySound = try {
+            val resId = resources.getIdentifier("emergency_alert", "raw", packageName)
+            if (resId != 0) android.net.Uri.parse("android.resource://$packageName/$resId")
+            else android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+        } catch (_: Exception) { android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI }
+
+        val emergencyChannel = NotificationChannel("emergency_channel", "Emergency Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Emergency assistance required"
+            val attrs = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            setSound(emergencySound, attrs)
+            enableLights(true)
+            lightColor = Color.RED
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 1000, 500, 1000)
+        }
+        nm.createNotificationChannel(emergencyChannel)
+
+        // Patrol Channel
+        val patrolChannel = NotificationChannel("patrol_channel", "Patrol Assignments", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            description = "Patrol route assignments"
+            enableLights(true)
+            lightColor = Color.BLUE
+            enableVibration(true)
+        }
+        nm.createNotificationChannel(patrolChannel)
+
+        // Sleep Alert Channel
+        val sleepSound = try {
+            val resId = resources.getIdentifier("sleep_alert", "raw", packageName)
+            if (resId != 0) android.net.Uri.parse("android.resource://$packageName/$resId")
+            else android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+        } catch (_: Exception) { android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI }
+
+        val sleepChannel = NotificationChannel("sleep_alert_channel", "Sleep Tracking Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Critical sleep alerts"
+            val attrs = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setFlags(android.media.AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+                .build()
+            setSound(sleepSound, attrs)
+            enableLights(true)
+            lightColor = Color.YELLOW
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 500, 200, 500, 200, 500)
+            setBypassDnd(true)
+        }
+        nm.createNotificationChannel(sleepChannel)
+
     }
 
     private fun ensureDefaultNotificationChannel() {
