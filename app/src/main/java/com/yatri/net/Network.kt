@@ -5,7 +5,7 @@ import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-// import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.yatri.AppConfig
@@ -20,11 +20,11 @@ object Network {
     private val json = Json { ignoreUnknownKeys = true }
     private val client = OkHttpClient.Builder()
         .apply {
-            // Commented out logging interceptor for release builds
-            // if (AppConfig.LOG_HTTP) {
-            //     val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
-            //     addInterceptor(logging)
-            // }
+            // Add HTTP logging interceptor when enabled in AppConfig
+            if (AppConfig.LOG_HTTP) {
+                val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+                addInterceptor(logging)
+            }
             addInterceptor(Interceptor { chain ->
                 val req = chain.request()
                 val tok = TokenStore.token
