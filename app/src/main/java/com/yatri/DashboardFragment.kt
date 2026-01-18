@@ -1,13 +1,17 @@
 package com.yatri
 
 import android.Manifest
+import android.app.AlertDialog
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.provider.Settings
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +19,6 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.Switch
 import android.widget.TextView
-import android.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -120,30 +123,37 @@ class DashboardFragment : Fragment() {
         view.findViewById<Switch>(R.id.swBackground).setOnCheckedChangeListener { switchView, isChecked ->
             val ctx = requireContext()
             // Persist switch state
-            val prefs = ctx.getSharedPreferences(PREF_NAME, android.content.Context.MODE_PRIVATE)
+            val prefs = ctx.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             prefs.edit().putBoolean(PREF_TRACKING, isChecked).apply()
 
             if (isChecked) {
-                // Check permissions first
+                // Check location permissions first
                 val fine = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 val coarse = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 if (!fine || !coarse) {
-                    ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), permReq)
+                    ActivityCompat.requestPermissions(
+                        requireActivity(),
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ),
+                        permReq
+                    )
                     android.widget.Toast.makeText(ctx, "Grant location permission to start tracking", android.widget.Toast.LENGTH_SHORT).show()
                     switchView.isChecked = false
                     prefs.edit().putBoolean(PREF_TRACKING, false).apply()
                     return@setOnCheckedChangeListener
                 }
-                
+
                 // Check if location services are enabled
-                val locationManager = ctx.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+                val locationManager = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
                 val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                 val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-                
+
                 if (!isGpsEnabled && !isNetworkEnabled) {
                     // Dismiss any existing dialog first
                     locationServicesDialog?.dismiss()
-                    
+
                     locationServicesDialog = AlertDialog.Builder(ctx)
                         .setTitle("Location Services Required")
                         .setMessage("Please enable GPS/Location services to start background tracking.")
@@ -162,12 +172,42 @@ class DashboardFragment : Fragment() {
                             locationServicesDialog = null
                         }
                         .show()
-                    
+
                     switchView.isChecked = false
                     prefs.edit().putBoolean(PREF_TRACKING, false).apply()
                     return@setOnCheckedChangeListener
                 }
-                
+
+                // Check notification permission (Android 13+) and channel state
+                if (!hasNotificationPermission(ctx)) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        ActivityCompat.requestPermissions(
+                            requireActivity(),
+                            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                            permReq
+                        )
+                    }
+                    android.widget.Toast.makeText(
+                        ctx,
+                        "Enable notification permission to start background tracking",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    switchView.isChecked = false
+                    prefs.edit().putBoolean(PREF_TRACKING, false).apply()
+                    return@setOnCheckedChangeListener
+                }
+
+                if (!isLocationChannelEnabled(ctx)) {
+                    android.widget.Toast.makeText(
+                        ctx,
+                        "Please enable Yatri location notifications in system settings to start background tracking",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    switchView.isChecked = false
+                    prefs.edit().putBoolean(PREF_TRACKING, false).apply()
+                    return@setOnCheckedChangeListener
+                }
+
                 android.util.Log.d("LocationService", "Starting foreground location service")
                 ctx.startForegroundService(Intent(ctx, LocationService::class.java))
                 updateBackgroundStatus(true)
@@ -189,6 +229,25 @@ class DashboardFragment : Fragment() {
             android.R.color.holo_orange_light,
             android.R.color.holo_red_light
         )
+    }
+
+    private fun hasNotificationPermission(ctx: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                ctx,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun isLocationChannelEnabled(ctx: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
+
+        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channel = nm.getNotificationChannel("loc_ch") ?: return true
+        return channel.importance != NotificationManager.IMPORTANCE_NONE
     }
 
     private fun setupTimer() {

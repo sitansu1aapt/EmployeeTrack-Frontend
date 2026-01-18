@@ -17,6 +17,8 @@ import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import retrofit2.http.Body
 import retrofit2.http.POST
 import com.yatri.localization.LocalizationManager
@@ -101,6 +103,12 @@ class LoginActivity : AppCompatActivity() {
 
                     // Log login request details
                     val loginUrl = "${AppConfig.API_BASE_URL}auth/login"
+                    val jsonBody = try {
+                        Json.encodeToString(request)
+                    } catch (e: Exception) {
+                        // Fallback: basic string if serialization fails for some reason
+                        "<serialization-error>: ${e.message}"
+                    }
                     android.util.Log.d("LoginActivity", "=== LOGIN API REQUEST ===")
                     android.util.Log.d("LoginActivity", "URL: $loginUrl")
                     android.util.Log.d("LoginActivity", "Method: POST")
@@ -108,6 +116,7 @@ class LoginActivity : AppCompatActivity() {
                     android.util.Log.d("LoginActivity", "Identifier Type: ${request.identifierType}")
                     android.util.Log.d("LoginActivity", "Identifier: $identifier")
                     android.util.Log.d("LoginActivity", "Password: ${"*".repeat(password.length)}")
+                    android.util.Log.d("LoginActivity", "JSON Body: $jsonBody")
                     
                     val env = authApi.login(request)
                     

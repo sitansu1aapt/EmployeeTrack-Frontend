@@ -74,7 +74,16 @@ class LocationService : Service() {
                     }.toString().toRequestBody("application/json".toMediaType())
                     val url = com.yatri.AppConfig.API_BASE_URL + "locations/me/update"
                     val token = com.yatri.TokenStore.token
-                    android.util.Log.d("LocationService", "POST $url lat=${loc.latitude} lng=${loc.longitude} acc=${loc.accuracy} tokenPrefix=${token?.take(12)}")
+                    val jsonBody = JSONObject().apply {
+                        put("latitude", loc.latitude)
+                        put("longitude", loc.longitude)
+                        put("accuracy", loc.accuracy)
+                    }.toString()
+                    android.util.Log.d(
+                        "LocationService",
+                        "REQUEST -> POST " +
+                            "$url | body=$jsonBody | token=${token ?: "<null>"}"
+                    )
                     val reqBuilder = Request.Builder()
                         .url(url)
                         .post(body)
@@ -83,7 +92,10 @@ class LocationService : Service() {
                     client.newCall(req).execute().use { resp ->
                         val code = resp.code
                         val respStr = resp.body?.string().orEmpty()
-                        android.util.Log.d("LocationService", "Response code=$code body=${respStr.take(200)}")
+                        android.util.Log.d(
+                            "LocationService",
+                            "RESPONSE <- code=$code body=$respStr"
+                        )
                     }
                     val ts = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
                     startForeground(1, notif("Last update ${String.format(Locale.US, "%.0f", loc.accuracy)}m @ $ts"))

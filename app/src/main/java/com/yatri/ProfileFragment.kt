@@ -64,6 +64,11 @@ class ProfileFragment : Fragment() {
         view.findViewById<View>(R.id.rowTestNotification)?.setOnClickListener {
             startActivity(Intent(requireContext(), NotificationTestActivity::class.java))
         }
+        
+        // Release Notes
+        view.findViewById<Button>(R.id.btnReleaseNotes)?.setOnClickListener {
+            startActivity(Intent(requireContext(), ReleaseNotesActivity::class.java))
+        }
         // Logout
         view.findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
             lifecycleScope.launch {

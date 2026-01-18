@@ -451,7 +451,10 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun submit() {
-        if (isSubmitting) return
+        if (isSubmitting) {
+            android.util.Log.w("CheckInActivity", "submit() called while isSubmitting=true, ignoring duplicate tap")
+            return
+        }
         isSubmitting = true
         val prefs = try { kotlinx.coroutines.runBlocking { applicationContext.dataStore.data.first() } } catch (_: Exception) { null }
         val latitude = lat
@@ -478,6 +481,10 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             selfie_url = selfie,
             device_info = device,
             notes = notes.ifEmpty { null }
+        )
+        android.util.Log.d(
+            "CheckInActivity",
+            "submit(): mode=$mode lat=$latitude lng=$longitude acc=$accuracy selfieUrl=$selfie notesLength=${notes.length} payload=$payload"
         )
         // Fetch org/site/dept for analytics
         val orgId = prefs?.get(com.yatri.PrefKeys.ORG_ID)
@@ -507,7 +514,13 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             try {
                 val start = System.currentTimeMillis()
                 val api = Network.retrofit.create<AttendanceApi>()
+                android.util.Log.d("CheckInActivity", "Calling attendance API: mode=$mode baseUrl=${Network.retrofit.baseUrl()} endpoint=" +
+                    if (mode == "checkout") "attendance/check-out" else "attendance/check-in")
                 if (mode == "checkout") api.checkOut(payload) else api.checkIn(payload)
+                android.util.Log.i(
+                    "CheckInActivity",
+                    "Attendance API success: mode=$mode durationMs=${System.currentTimeMillis() - start} lat=$latitude lng=$longitude acc=$accuracy"
+                )
                 runOnUiThread {
                     Toast.makeText(this@CheckInActivity, "Submitted", Toast.LENGTH_SHORT).show()
                     // Analytics: success
@@ -551,12 +564,45 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                         errorMap["method"] = resp?.raw()?.request?.method ?: ""
                         val body = resp?.errorBody()?.string()?.take(500)
                         if (!body.isNullOrBlank()) errorMap["error_body"] = body
+                        android.util.Log.e(
+                            "CheckInActivity",
+                            "Attendance API HttpException: code=${e.code()} message=${e.message()} url=${errorMap["url"]} method=${errorMap["method"]} body=$body",
+                            e
+                        )
+
+                        // Try to surface a friendly backend message to the user, e.g. "No active shift found."
+                        val userMessage = try {
+                            if (!body.isNullOrBlank()) {
+                                val json = org.json.JSONObject(body)
+                                json.optString("message").takeIf { it.isNotBlank() }
+                            } else null
+                        } catch (_: Exception) {
+                            null
+                        } ?: "Check-in failed (${e.code()}). Please try again."
+
+                        runOnUiThread {
+                            android.widget.Toast.makeText(this@CheckInActivity, userMessage, android.widget.Toast.LENGTH_LONG).show()
+                        }
                     }
                     is SocketTimeoutException -> {
                         errorMap["timeout"] = true
+                        android.util.Log.e("CheckInActivity", "Attendance API timeout: mode=$mode", e)
+                        runOnUiThread {
+                            android.widget.Toast.makeText(this@CheckInActivity, "Check-in timed out. Please check your network and try again.", android.widget.Toast.LENGTH_LONG).show()
+                        }
                     }
                     is IOException -> {
                         errorMap["network_error"] = true
+                        android.util.Log.e("CheckInActivity", "Attendance API network error: mode=$mode", e)
+                        runOnUiThread {
+                            android.widget.Toast.makeText(this@CheckInActivity, "Network error while submitting check-in. Please try again.", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    else -> {
+                        android.util.Log.e("CheckInActivity", "Attendance API unexpected error: mode=$mode", e)
+                        runOnUiThread {
+                            android.widget.Toast.makeText(this@CheckInActivity, "Unexpected error while submitting check-in.", android.widget.Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
                 Analytics.log(if (mode == "checkout") "checkout_error" else "checkin_error", errorMap + Analytics.nowParams())
