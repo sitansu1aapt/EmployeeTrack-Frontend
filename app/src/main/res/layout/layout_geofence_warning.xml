@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/geofenceWarningLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="@android:color/white"
+    android:visibility="gone"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@drawable/ic_geofence_out"
+        android:layout_marginBottom="32dp"
+        app:tint="#D32F2F"
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Out of Site Boundary"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#D32F2F"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="You must be within the assigned site geofence to use the application. Please move inside the site boundary and try again."
+        android:textSize="16sp"
+        android:textColor="#424242"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="32dp"/>
+
+    <Button
+        android:id="@+id/btnRetryGeofence"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check Again"
+        android:backgroundTint="#D32F2F"
+        android:textColor="@android:color/white"
+        android:paddingHorizontal="32dp"
+        android:paddingVertical="12dp"/>
+
+</LinearLayout>

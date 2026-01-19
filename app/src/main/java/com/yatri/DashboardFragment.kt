@@ -417,6 +417,9 @@ class DashboardFragment : Fragment() {
         
         // Update map location if location services are now enabled
         updateMapLocationIfEnabled()
+
+        // Double check geofence (User Request)
+        (activity as? EmployeeActivity)?.checkPermissionsAndGeofence()
     }
 
     override fun onDestroyView() {
