@@ -41,6 +41,7 @@
         android:largeHeap="true"
         android:requestLegacyExternalStorage="true"
         android:preserveLegacyExternalStorage="true"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <meta-data android:name="firebase_analytics_collection_enabled" android:value="true" />
     
@@ -118,6 +119,15 @@
             android:exported="false"/>
         <activity
             android:name=".attendance.AttendanceHistoryActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".helpdesk.HelpdeskActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".helpdesk.CreateHelpdeskRequestActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".helpdesk.HelpdeskDetailActivity"
             android:exported="false"/>
 
         <service

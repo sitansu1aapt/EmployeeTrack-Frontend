@@ -36,6 +36,33 @@
     <string name="question_screen">Question Screen</string>
     <string name="alerts">Alerts</string>
     
+    <!-- Helpdesk strings -->
+    <string name="helpdesk_requests">Helpdesk Requests</string>
+    <string name="create_helpdesk_request">Create Helpdesk Request</string>
+    <string name="select_query_type">Select query type</string>
+    <string name="query_type">Query Type</string>
+    <string name="description">Description</string>
+    <string name="add_attachment">Add Attachment</string>
+    <string name="submit_request">Submit Request</string>
+    <string name="helpdesk_request_created">Helpdesk request created successfully</string>
+    <string name="unable_to_create_request">Unable to create helpdesk request</string>
+    <string name="attachment_upload_failed">Attachment upload failed</string>
+    <string name="employee_details">Employee Details</string>
+    <string name="employee_name">Employee Name</string>
+    <string name="loading_employee_name">Loading employee name</string>
+    <string name="loading_employee_id">Loading employee ID</string>
+    <string name="please_select_query_type">Please select a query type</string>
+    <string name="please_enter_description">Please enter a description</string>
+    <string name="unable_to_load_requests">Unable to load helpdesk requests</string>
+    <string name="unable_to_load_detail">Unable to load helpdesk detail</string>
+    <string name="no_helpdesk_requests">No helpdesk requests found</string>
+    <string name="no_replies_yet">No replies yet</string>
+    <string name="open_attachment">Open Attachment</string>
+    <string name="open_reply_attachment">Open Reply Attachment</string>
+    <string name="remove_attachment">Remove attachment</string>
+    <string name="not_available">Not available</string>
+    <string name="network_error">Network error. Please check your connection.</string>
+    
     <!-- Additional strings for check-in process -->
     <string name="take_selfie_verification">Take a selfie for verification</string>
     <string name="add_notes_optional">Add notes (optional)</string>

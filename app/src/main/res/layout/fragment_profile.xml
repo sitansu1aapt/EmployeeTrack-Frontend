@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background">
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -27,6 +28,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:text="test user"
+                android:textColor="@color/text_primary"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:layout_marginTop="12dp"/>
@@ -36,7 +38,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:text="ORGANIZATION_ADMIN"
-                android:textColor="#7A8A99"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
             <TextView
                 android:id="@+id/tvUserId"
@@ -44,7 +46,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:text="id: 1336"
-                android:textColor="#7A8A99"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
@@ -61,6 +63,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Personal Information"
+                android:textColor="@color/text_primary"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
 
@@ -75,7 +78,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_mail"
-                    android:tint="#5F6C7B"/>
+                    android:tint="@color/icon_tint"/>
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -86,21 +89,21 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Email"
-                        android:textColor="#5F6C7B"/>
+                        android:textColor="@color/text_label"/>
                     <TextView
                         android:id="@+id/tvEmail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="db@gmail.com"
                         android:textSize="16sp"
-                        android:textColor="#0F172A"/>
+                        android:textColor="@color/text_primary"/>
                 </LinearLayout>
             </LinearLayout>
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="12dp"
-                android:background="#E6E9EF"/>
+                android:background="@color/divider"/>
 
             <!-- Department Row -->
             <LinearLayout
@@ -113,7 +116,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_dashboard"
-                    android:tint="#5F6C7B"/>
+                    android:tint="@color/icon_tint"/>
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -124,21 +127,21 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Department"
-                        android:textColor="#5F6C7B"/>
+                        android:textColor="@color/text_label"/>
                     <TextView
                         android:id="@+id/tvDepartment"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Not Assigned"
                         android:textSize="16sp"
-                        android:textColor="#0F172A"/>
+                        android:textColor="@color/text_primary"/>
                 </LinearLayout>
             </LinearLayout>
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="12dp"
-                android:background="#E6E9EF"/>
+                android:background="@color/divider"/>
 
             <!-- Organization Row -->
             <LinearLayout
@@ -151,7 +154,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_tasks"
-                    android:tint="#5F6C7B"/>
+                    android:tint="@color/icon_tint"/>
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -162,14 +165,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Organization"
-                        android:textColor="#5F6C7B"/>
+                        android:textColor="@color/text_label"/>
                     <TextView
                         android:id="@+id/tvOrganization"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Employee @ OrgID 1"
                         android:textSize="16sp"
-                        android:textColor="#0F172A"/>
+                        android:textColor="@color/text_primary"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -188,6 +191,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="account_settings"
+                android:textColor="@color/text_primary"
                 android:textStyle="bold"
                 android:textSize="18sp"
                 android:layout_marginBottom="12dp" />
@@ -210,7 +214,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Language" />
+                    android:text="Language"
+                    android:textColor="@color/text_primary" />
                 <Spinner
                     android:id="@+id/spinnerLanguage"
                     android:layout_width="wrap_content"
@@ -223,6 +228,14 @@
                 android:layout_height="48dp"
                 android:text="Update FCM Token"
                 android:drawableLeft="@drawable/ic_refresh"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnHelpdesk"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Helpdesk Requests"
+                android:drawableLeft="@drawable/ic_notification"
                 android:layout_marginBottom="8dp" />
 
             <Button

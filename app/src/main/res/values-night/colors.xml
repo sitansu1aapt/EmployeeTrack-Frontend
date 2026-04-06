@@ -4,6 +4,10 @@
     <color name="card_bg">#1E1E1E</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B0B0B0</color>
+    <color name="text_label">#C0CAD5</color>
+    <color name="divider">#2F3944</color>
+    <color name="icon_tint">#C0CAD5</color>
+    <color name="surface_variant">#18212B</color>
     <color name="background">#121212</color>
     <color name="border">#424242</color>
     <color name="textLight">#B0B0B0</color>

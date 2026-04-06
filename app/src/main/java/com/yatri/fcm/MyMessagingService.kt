@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.yatri.EmployeeActivity
+import com.yatri.helpdesk.HelpdeskDetailActivity
 import com.yatri.sleep.QuestionActivity
 import com.yatri.R
 import com.yatri.net.Network
@@ -49,7 +50,15 @@ class MyMessagingService : FirebaseMessagingService() {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = ensureAlertChannel(manager)
 
-        val intent = Intent(this, EmployeeActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
+        val requestId = message.data["helpdesk_request_id"]?.toLongOrNull()
+        val intent = if (message.data["type"] == "HELPDESK_REQUEST_UPDATED" && requestId != null && requestId > 0) {
+            Intent(this, HelpdeskDetailActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(HelpdeskDetailActivity.EXTRA_REQUEST_ID, requestId)
+            }
+        } else {
+            Intent(this, EmployeeActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
+        }
         val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0))
 
         val title = message.notification?.title ?: message.data["title"] ?: "Yatri"
