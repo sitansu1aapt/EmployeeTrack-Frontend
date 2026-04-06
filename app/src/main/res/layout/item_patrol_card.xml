@@ -41,7 +41,7 @@
         android:layout_marginTop="8dp"
         android:text="Scheduled: --:--"
         android:textSize="14sp"
-        android:textColor="#556270"/>
+        android:textColor="@color/text_label"/>
 
     <LinearLayout
         android:id="@+id/buttonRow"

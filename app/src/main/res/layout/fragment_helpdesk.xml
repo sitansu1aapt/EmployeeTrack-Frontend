@@ -10,7 +10,7 @@
         android:id="@+id/btnCreateRequest"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:text="Create Helpdesk Request"
+        android:text="@string/create_helpdesk_request"
         android:backgroundTint="@color/blue_500"
         android:textColor="@android:color/white" />
 

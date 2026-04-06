@@ -38,10 +38,16 @@
     
     <!-- Helpdesk strings -->
     <string name="helpdesk_requests">Helpdesk Requests</string>
+    <string name="helpdesk_request">Helpdesk Request</string>
     <string name="create_helpdesk_request">Create Helpdesk Request</string>
     <string name="select_query_type">Select query type</string>
     <string name="query_type">Query Type</string>
+    <string name="status">Status</string>
+    <string name="site">Site</string>
+    <string name="department">Department</string>
+    <string name="replies">Replies</string>
     <string name="description">Description</string>
+    <string name="description_hint">Explain your issue in detail</string>
     <string name="add_attachment">Add Attachment</string>
     <string name="submit_request">Submit Request</string>
     <string name="helpdesk_request_created">Helpdesk request created successfully</string>

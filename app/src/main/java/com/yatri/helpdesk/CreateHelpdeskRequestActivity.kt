@@ -15,6 +15,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.appbar.MaterialToolbar
 import com.yatri.PrefKeys
 import com.yatri.ProfileApi
 import com.yatri.R
@@ -70,6 +71,11 @@ class CreateHelpdeskRequestActivity : AppCompatActivity() {
         attachmentRow = findViewById(R.id.attachmentRow)
 
         attachmentRow.visibility = View.GONE
+
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = getString(R.string.create_helpdesk_request)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         spinnerQueryType.adapter = android.widget.ArrayAdapter(
             this,
@@ -204,5 +210,10 @@ class CreateHelpdeskRequestActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressedDispatcher.onBackPressed()
+        return true
     }
 }

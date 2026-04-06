@@ -54,4 +54,6 @@
     <color name="text_on_primary">#FFFFFF</color>
     <color name="text_primary_darkmode">#FFFFFF</color>
     <color name="text_secondary_darkmode">#B0B0B0</color>
+    <color name="color_success_surface">#E6F4EA</color>
+    <color name="color_on_success_surface">#0F5132</color>
 </resources>

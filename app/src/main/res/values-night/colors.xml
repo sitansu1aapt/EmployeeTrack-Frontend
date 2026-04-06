@@ -26,5 +26,7 @@
     <color name="text_primary_darkmode">#FFFFFF</color>
     <color name="text_secondary_darkmode">#B0B0B0</color>
     <color name="text_tertiary">#757575</color>
+    <color name="color_success_surface">#1B3A2A</color>
+    <color name="color_on_success_surface">#86EFAC</color>
 </resources>
 

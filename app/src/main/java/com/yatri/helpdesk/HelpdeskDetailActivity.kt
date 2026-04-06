@@ -11,9 +11,13 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.appbar.MaterialToolbar
 import com.yatri.R
 import com.yatri.net.Network
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class HelpdeskDetailActivity : AppCompatActivity() {
     companion object {
@@ -43,6 +47,11 @@ class HelpdeskDetailActivity : AppCompatActivity() {
         replyContainer = findViewById(R.id.replyContainer)
         tvNoReplies = findViewById(R.id.tvNoReplies)
         progressBar = findViewById(R.id.progressBar)
+
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = getString(R.string.helpdesk_request)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val requestId = intent.getLongExtra(EXTRA_REQUEST_ID, -1L)
         if (requestId < 0) {
@@ -103,7 +112,7 @@ class HelpdeskDetailActivity : AppCompatActivity() {
                 view.findViewById<TextView>(R.id.tvReplyRole).text = reply.sender_role_name
                 view.findViewById<TextView>(R.id.tvReplyMessage).text = reply.reply_message ?: "No message"
                 view.findViewById<TextView>(R.id.tvReplyStatus).text = reply.status_after_reply
-                view.findViewById<TextView>(R.id.tvReplyCreatedAt).text = reply.created_at
+                view.findViewById<TextView>(R.id.tvReplyCreatedAt).text = HelpdeskAdapter.formatTimestamp(reply.created_at)
                 val btnReplyAttachment = view.findViewById<Button>(R.id.btnReplyAttachment)
                 if (!reply.attachment_url.isNullOrBlank()) {
                     btnReplyAttachment.visibility = View.VISIBLE
@@ -120,5 +129,10 @@ class HelpdeskDetailActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressedDispatcher.onBackPressed()
+        return true
     }
 }
