@@ -1,13 +1,53 @@
 package com.yatri
 
 import kotlinx.serialization.Serializable
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Multipart
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Part
+import retrofit2.http.Body
 
 interface ProfileApi {
     @GET("auth/me")
     suspend fun getProfile(): Response<ProfileResponse>
+
+    @Multipart
+    @POST("files/profile-photo")
+    suspend fun uploadProfilePhoto(
+        @Part photo: MultipartBody.Part
+    ): Response<UploadPhotoResponse>
+
+    @PATCH("users/me/profile")
+    suspend fun updateProfilePicture(
+        @Body body: UpdateProfileBody
+    ): Response<GenericResponse>
 }
+
+@Serializable
+data class UploadPhotoResponse(
+    val success: Boolean,
+    val data: UploadPhotoData,
+    val message: String? = null
+)
+
+@Serializable
+data class UploadPhotoData(
+    val profile_photo_url: String
+)
+
+@Serializable
+data class UpdateProfileBody(
+    val profile_picture_url: String
+)
+
+@Serializable
+data class GenericResponse(
+    val success: Boolean,
+    val message: String? = null
+)
 
 @Serializable
 data class ProfileResponse(

@@ -120,8 +120,9 @@ class EmployeeActivity : AppCompatActivity() {
 
     private fun showGeofenceWarning(show: Boolean) {
         geofenceWarningLayout.visibility = if (show) android.view.View.VISIBLE else android.view.View.GONE
-        findViewById<android.view.View>(R.id.container).visibility = if (show) android.view.View.GONE else android.view.View.VISIBLE
-        findViewById<android.view.View>(R.id.bottomNav).visibility = if (show) android.view.View.GONE else android.view.View.VISIBLE
+        // Do not hide container or bottomNav to keep them visible behind the transparent overlay
+        // findViewById<android.view.View>(R.id.container).visibility = if (show) android.view.View.GONE else android.view.View.VISIBLE
+        // findViewById<android.view.View>(R.id.bottomNav).visibility = if (show) android.view.View.GONE else android.view.View.VISIBLE
     }
 
     private fun switch(fragment: Fragment) {

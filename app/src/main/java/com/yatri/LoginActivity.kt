@@ -133,6 +133,10 @@ class LoginActivity : AppCompatActivity() {
                     }
                     val resp = env.data ?: error(env.message ?: "Invalid login response")
                     val token = resp.token?.authToken ?: error("Invalid login response")
+                    val resolvedUserId =
+                        resp.user?.id?.takeIf { it.isNotBlank() }
+                            ?: JwtPayload.userId(token)
+                                ?: ""
 
                     // IMPORTANT: Set TokenStore.token FIRST before any API calls
                     TokenStore.token = token
@@ -157,30 +161,29 @@ class LoginActivity : AppCompatActivity() {
                         android.util.Log.w("LoginActivity", "FCM token is null or empty, skipping update")
                     }
 
-                    // Persist simple header fields for Profile
+                    // Persist simple header fields for Profile (user id from API or JWT — API often omits id)
                     applicationContext.dataStore.edit {
-                        val displayName = resp.user?.full_name
-                            ?: resp.user?.email
-                            ?: resp.user?.id
+                        val displayName = resp.user?.full_name?.takeIf { it.isNotBlank() }
+                            ?: resp.user?.email?.takeIf { it.isNotBlank() }
                             ?: "Employee"
                         it[PrefKeys.USER_NAME] = displayName
-                        it[PrefKeys.USER_ID] = resp.user?.id ?: ""
+                        it[PrefKeys.USER_ID] = resolvedUserId
                         it[PrefKeys.USER_EMAIL] = resp.user?.email ?: ""
                         if (!resp.roles.isNullOrEmpty()) {
                             it[PrefKeys.ACTIVE_ROLE_ID] = resp.roles.first().role_id.toString()
                             it[PrefKeys.ACTIVE_ROLE_NAME] = resp.roles.first().role_name
                         }
                     }
-                    // Update in-memory context for logging
-                    UserContext.userId = resp.user?.id
+                    // Update in-memory context for logging / chat
+                    UserContext.userId = resolvedUserId.ifEmpty { null }
                     UserContext.userEmail = resp.user?.email
                     UserContext.userName = resp.user?.full_name ?: UserContext.userEmail ?: "Employee"
                     UserContext.roleName = resp.roles.firstOrNull()?.role_name
                     // Analytics: set user + log success
-                    Analytics.setUser(resp.user?.id ?: resp.user?.email, resp.roles.firstOrNull()?.role_name)
+                    Analytics.setUser(resolvedUserId.ifEmpty { resp.user?.email }, resp.roles.firstOrNull()?.role_name)
                     Analytics.log("login_success", mapOf(
                         "method" to identifierType,
-                        "user_id_present" to (resp.user?.id != null),
+                        "user_id_present" to resolvedUserId.isNotEmpty(),
                         "role" to (resp.roles.firstOrNull()?.role_name ?: "")
                     ) + Analytics.nowParams())
                     Toast.makeText(this@LoginActivity, "Login success", Toast.LENGTH_SHORT).show()

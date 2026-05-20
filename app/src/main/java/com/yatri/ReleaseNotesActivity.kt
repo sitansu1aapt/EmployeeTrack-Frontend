@@ -25,6 +25,14 @@ class ReleaseNotesActivity : AppCompatActivity() {
     private fun getDummyReleaseNotes(): List<ReleaseNote> {
         return listOf(
             ReleaseNote(
+                "v1.2.12",
+                "Jan 19, 2026",
+                listOf(
+                    "Geofence Enforcement: Improved security compliance by restricting app usage strictly to assigned site boundaries. The app will now automatically lock features if you are outside the designated work area."
+                ),
+                "#2196F3" // Blue
+            ),
+            ReleaseNote(
                 "v1.2.11",
                 "Jan 09, 2026",
                 listOf(

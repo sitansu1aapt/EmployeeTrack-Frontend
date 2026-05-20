@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.yatri"
-    compileSdk = 34
+    compileSdk = 35
 
     signingConfigs {
         create("release") {
@@ -21,9 +21,9 @@ android {
     defaultConfig {
         applicationId = "com.yatri"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.2.11"
+        targetSdk = 35
+        versionCode = 4
+        versionName = "1.2.12"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -118,6 +118,8 @@ dependencies {
     // Firebase Messaging only (no analytics/crashlytics)
     implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
     // Firebase Analytics
     implementation("com.google.firebase:firebase-analytics-ktx")
 

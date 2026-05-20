@@ -1,52 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/geofenceWarningLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp"
-    android:background="@android:color/white"
-    android:visibility="gone"
+    android:background="#B3000000"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:visibility="gone">
 
-    <ImageView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@drawable/ic_geofence_out"
-        android:layout_marginBottom="32dp"
-        app:tint="#D32F2F"
-        xmlns:app="http://schemas.android.com/apk/res-auto"/>
-
-    <TextView
-        android:layout_width="wrap_content"
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Out of Site Boundary"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="#D32F2F"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"/>
+        android:layout_gravity="center"
+        android:layout_margin="32dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@android:color/white">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="You must be within the assigned site geofence to use the application. Please move inside the site boundary and try again."
-        android:textSize="16sp"
-        android:textColor="#424242"
-        android:gravity="center"
-        android:lineSpacingExtra="4dp"
-        android:layout_marginBottom="32dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp">
 
-    <Button
-        android:id="@+id/btnRetryGeofence"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Check Again"
-        android:backgroundTint="#D32F2F"
-        android:textColor="@android:color/white"
-        android:paddingHorizontal="32dp"
-        android:paddingVertical="12dp"/>
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/ic_geofence_out"
+                android:layout_marginBottom="24dp"
+                app:tint="#D32F2F"/>
 
-</LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Out of Site Boundary"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#D32F2F"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You must be within the assigned site geofence to use the application."
+                android:textSize="16sp"
+                android:textColor="#424242"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="24dp"/>
+
+            <Button
+                android:id="@+id/btnRetryGeofence"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Check Again"
+                android:backgroundTint="#D32F2F"
+                android:textColor="@android:color/white"
+                android:paddingVertical="12dp"
+                android:textAllCaps="true"
+                android:textStyle="bold"/>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

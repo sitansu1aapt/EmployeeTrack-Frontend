@@ -98,7 +98,7 @@ class LocationService : Service() {
                         )
                     }
                     val ts = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
-                    startForeground(1, notif("Last update ${String.format(Locale.US, "%.0f", loc.accuracy)}m @ $ts"))
+                    startForeground(1, notif("Last update ${String.format(Locale.US, "%.0f", loc.accuracy)}m @ $ts"), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
                 }
                 interval = 60000L
             } catch (e: Exception) {
