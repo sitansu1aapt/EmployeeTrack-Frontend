@@ -15,6 +15,10 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.yatri.AppContext
 import com.yatri.UserContext
+import com.yatri.dataStore
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 object Network {
     private val json = Json { ignoreUnknownKeys = true }
@@ -89,6 +93,12 @@ object Network {
                             putString("organization_id", UserContext.orgId)
                             putString("site_id", UserContext.siteId)
                             putString("department_id", UserContext.deptId)
+                            // Handset hardware telemetry for online diagnosis
+                            putString("device_model", android.os.Build.MODEL)
+                            putString("device_manufacturer", android.os.Build.MANUFACTURER)
+                            putString("device_brand", android.os.Build.BRAND)
+                            putString("android_sdk", android.os.Build.VERSION.SDK_INT.toString())
+                            putString("android_release", android.os.Build.VERSION.RELEASE)
                         }
                         Firebase.analytics.logEvent("api_error", eb)
                     }
@@ -99,10 +109,25 @@ object Network {
                 val response = chain.proceed(chain.request())
                 // Check for 401 Unauthorized response
                 if (response.code == 401) {
-                    android.util.Log.w("Network", "Received 401 Unauthorized - clearing token")
+                    android.util.Log.w("Network", "Received 401 Unauthorized - clearing token and DataStore")
                     // Clear the token from memory
                     TokenStore.token = null
-                    // Note: DataStore will be cleared when user manually logs out or app restarts
+                    // Asynchronously clear DataStore from disk to prevent persistent auto-login loop
+                    try {
+                        val ctx = AppContext.context
+                        if (ctx != null) {
+                            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                try {
+                                    ctx.dataStore.edit { it.clear() }
+                                    android.util.Log.i("Network", "DataStore cleared successfully on 401")
+                                } catch (e: Exception) {
+                                    android.util.Log.e("Network", "Error clearing DataStore on 401: ${e.message}")
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("Network", "Failed to clear DataStore on 401", e)
+                    }
                 }
                 response
             })

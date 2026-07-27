@@ -18,7 +18,7 @@ android {
         }
     }
 
-    defaultConfig {
+    defaultConfig { 
         applicationId = "com.yatri"
         minSdk = 24
         targetSdk = 34
