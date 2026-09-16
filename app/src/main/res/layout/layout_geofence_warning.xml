@@ -1,52 +1,279 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/geofenceWarningLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp"
     android:background="@android:color/white"
-    android:visibility="gone"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:fillViewport="true"
+    android:visibility="gone">
 
-    <ImageView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@drawable/ic_geofence_out"
-        android:layout_marginBottom="32dp"
-        app:tint="#D32F2F"
-        xmlns:app="http://schemas.android.com/apk/res-auto"/>
-
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Out of Site Boundary"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="#D32F2F"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"/>
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="20dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="You must be within the assigned site geofence to use the application. Please move inside the site boundary and try again."
-        android:textSize="16sp"
-        android:textColor="#424242"
-        android:gravity="center"
-        android:lineSpacingExtra="4dp"
-        android:layout_marginBottom="32dp"/>
+        <ImageView
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:src="@drawable/ic_geofence_out"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="6dp"
+            app:tint="#D32F2F"/>
 
-    <Button
-        android:id="@+id/btnRetryGeofence"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Check Again"
-        android:backgroundTint="#D32F2F"
-        android:textColor="@android:color/white"
-        android:paddingHorizontal="32dp"
-        android:paddingVertical="12dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Out of Site Boundary"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#D32F2F"
+            android:layout_marginBottom="4dp"
+            android:gravity="center"/>
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvGeofenceMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You must be within your assigned site geofence to use the application."
+            android:textSize="13sp"
+            android:textColor="#424242"
+            android:gravity="center"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Google Map showing current location and assigned geofence boundary -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="290dp"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <com.google.android.gms.maps.MapView
+                    android:id="@+id/mapWarningView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+                <ProgressBar
+                    android:id="@+id/pbGeofenceLoading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+
+                <!-- Camera Focus Quick Controls -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:background="#EEFFFFFF"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="2dp"
+                    android:elevation="6dp">
+
+                    <TextView
+                        android:id="@+id/btnFocusUser"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📍 My Location"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"/>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="#CCCCCC"/>
+
+                    <TextView
+                        android:id="@+id/btnFocusSite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🏢 Site Geofence"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#D32F2F"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"/>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="#CCCCCC"/>
+
+                    <TextView
+                        android:id="@+id/btnFocusBoth"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🗺️ Fit Both"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"/>
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Detailed diagnostic info -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardBackgroundColor="#F8FAFF"
+            app:cardElevation="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvGeofenceSiteName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Assigned Site: Fetching..."
+                    android:textStyle="bold"
+                    android:textColor="#24384B"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvGeofenceUserLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Your GPS: Fetching..."
+                    android:textColor="#7A8A99"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvGeofenceDistanceStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Status: Checking location..."
+                    android:textColor="#D32F2F"
+                    android:textStyle="bold"
+                    android:textSize="13sp"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Root Cause Analysis (RCA) Explanation Card for Employee -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardGeofenceRcaReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardBackgroundColor="#FFEBEE"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvGeofenceRcaTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🚨 Reason: Checking cause..."
+                    android:textStyle="bold"
+                    android:textColor="#C62828"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvGeofenceRcaDesc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Detailed explanation of why your device location failed geofence check."
+                    android:textColor="#5D4037"
+                    android:textSize="12sp"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/btnRetryGeofence"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CHECK AGAIN"
+            android:backgroundTint="#D32F2F"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btnReportGeofence"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="REPORT DISCREPANCY TO ADMIN"
+            android:backgroundTint="#E3F2FD"
+            android:textColor="#1565C0"
+            android:textStyle="bold"
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Fallback: GPS can drift by tens of metres. If the worker is genuinely on site but
+             shown outside, allow a recorded override check-in. Shown only when it plausibly is a
+             GPS issue (has a site + a GPS fix, not a wrong-city mismatch). -->
+        <Button
+            android:id="@+id/btnCheckInAnyway"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CHECK IN ANYWAY (OUTSIDE BOUNDARY)"
+            android:backgroundTint="#FFF3E0"
+            android:textColor="#E65100"
+            android:textStyle="bold"
+            android:paddingVertical="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvCheckInAnywayHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Use only if you are actually at your work site. This override is recorded and sent to Admin."
+            android:textSize="11sp"
+            android:textColor="#8D6E63"
+            android:gravity="center"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+
+</ScrollView>
