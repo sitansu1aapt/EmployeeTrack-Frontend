@@ -49,14 +49,26 @@ class CheckInLocationActivity : AppCompatActivity(), OnMapReadyCallback {
             try {
                 val response = api.getSiteAssignmentsByUserId()
                 val assignments = response.body()?.data
-                if (!assignments.isNullOrEmpty()) {
-                    siteAssignment = assignments[0]
-                } else {
-                    tvStatus.text = "No site assignment found"
-                    tvStatus.setTextColor(getColor(R.color.error))
+                when {
+                    !assignments.isNullOrEmpty() -> {
+                        siteAssignment = assignments[0]
+                    }
+                    // Distinguish auth/server failures from a genuine "no assignment".
+                    !response.isSuccessful -> {
+                        tvStatus.text = when (response.code()) {
+                            401, 403 -> "Session expired. Please log out and log in again."
+                            in 500..599 -> "Server error. Please try again in a moment."
+                            else -> "Couldn't verify your site assignment (error ${response.code()})."
+                        }
+                        tvStatus.setTextColor(getColor(R.color.error))
+                    }
+                    else -> {
+                        tvStatus.text = "No site assignment found. Please contact your Admin."
+                        tvStatus.setTextColor(getColor(R.color.error))
+                    }
                 }
             } catch (e: Exception) {
-                tvStatus.text = "Failed to fetch assignment"
+                tvStatus.text = "Network error while fetching assignment. Check your connection."
                 tvStatus.setTextColor(getColor(R.color.error))
             }
             // Fetch user location
@@ -85,7 +97,7 @@ class CheckInLocationActivity : AppCompatActivity(), OnMapReadyCallback {
         map.addMarker(MarkerOptions().position(userLoc).title("Your Location"))
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(userLoc, 16f))
         // Draw geofence polygon
-        val polygon = assignment.geofenceShapeData.coordinates.map { LatLng(it.lat, it.lng) }
+        val polygon = assignment.geofenceShapeData?.coordinates?.map { LatLng(it.lat, it.lng) } ?: emptyList()
         map.addPolygon(com.google.android.gms.maps.model.PolygonOptions()
             .addAll(polygon)
             .strokeColor(getColor(R.color.blue_500))

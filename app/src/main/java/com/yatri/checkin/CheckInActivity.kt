@@ -101,10 +101,13 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                 android.util.Log.d("CheckInActivity", "API status: $status, assignments: $assignments")
                 if (status == "success" && !assignments.isNullOrEmpty()) {
                     val assignment = assignments[0]
-                    geofencePolygon = assignment.geofenceShapeData.coordinates.map { com.google.android.gms.maps.model.LatLng(it.lat, it.lng) }
-                    android.util.Log.d("CheckInActivity", "Geofence polygon: ${assignment.geofenceShapeData.coordinates}")
+                    geofencePolygon = assignment.geofenceShapeData?.coordinates?.map { com.google.android.gms.maps.model.LatLng(it.lat, it.lng) } ?: emptyList()
+                    android.util.Log.d("CheckInActivity", "Geofence polygon: ${assignment.geofenceShapeData?.coordinates}")
+                } else if (!response.isSuccessful) {
+                    // Auth/server failure — NOT the same as a genuine empty assignment list.
+                    android.util.Log.e("CheckInActivity", "Site assignment fetch failed: HTTP ${response.code()} (401/403 = session expired)")
                 } else {
-                    android.util.Log.e("CheckInActivity", "No site assignments found or invalid response")
+                    android.util.Log.e("CheckInActivity", "No site assignments for this user (empty list from server)")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("CheckInActivity", "Error fetching site assignments", e)
@@ -161,6 +164,7 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                 android.util.Log.w("CheckInActivity", "btnNext click ignored because isEnabled=false")
                 return@setOnClickListener
             }
+            val stepBefore = step
             when (step) {
                 0 -> {
                     android.util.Log.d("CheckInActivity", "Action: fetchLocation()")
@@ -185,7 +189,10 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                 else -> android.util.Log.w("CheckInActivity", "Unexpected step=$step")
             }
             android.util.Log.i("CheckInActivity", "After click handled -> step=$step")
-            renderStep()
+            // Don't re-render while async location fetch is in progress on step 0
+            if (stepBefore != 0) {
+                renderStep()
+            }
         }
 
         findViewById<Button>(R.id.btnPrev).setOnClickListener {
@@ -314,18 +321,45 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 100)
             return
         }
+        val btnNext = findViewById<Button>(R.id.btnNext)
+        btnNext.isEnabled = false
+        btnNext.text = "Getting location..."
+
+        fun onLocationReady(loc: android.location.Location) {
+            lat = loc.latitude
+            lng = loc.longitude
+            acc = loc.accuracy.toDouble()
+            userLatLng = LatLng(loc.latitude, loc.longitude)
+            step++
+            renderStep()
+        }
+
         client.lastLocation.addOnSuccessListener { loc ->
             if (loc != null) {
-                lat = loc.latitude
-                lng = loc.longitude
-                acc = loc.accuracy.toDouble()
-                step++
-                renderStep()
+                onLocationReady(loc)
             } else {
-                Toast.makeText(this, "Location unavailable", Toast.LENGTH_SHORT).show()
+                // lastLocation can be null — request a fresh reading
+                val request = com.google.android.gms.location.CurrentLocationRequest.Builder()
+                    .setPriority(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY)
+                    .setMaxUpdateAgeMillis(30_000)
+                    .build()
+                client.getCurrentLocation(request, null)
+                    .addOnSuccessListener { fresh ->
+                        if (fresh != null) {
+                            onLocationReady(fresh)
+                        } else {
+                            Toast.makeText(this, "Location unavailable. Turn on GPS and try again.", Toast.LENGTH_LONG).show()
+                            renderStep()
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Location failed. Turn on GPS and try again.", Toast.LENGTH_LONG).show()
+                        renderStep()
+                    }
             }
         }.addOnFailureListener {
             Toast.makeText(this, "Location failed", Toast.LENGTH_SHORT).show()
+            renderStep()
         }
     }
 
