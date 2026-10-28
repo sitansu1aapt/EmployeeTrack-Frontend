@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.yatri.LocationService
+import com.yatri.AppConfig
 
 /**
  * Background tracking follows duty: it runs while the employee is checked in and stops at
@@ -116,9 +117,9 @@ object TrackingController {
         val notification = NotificationCompat.Builder(app, RESUME_CHANNEL)
             .setSmallIcon(com.yatri.R.mipmap.ic_launcher)
             .setContentTitle("Location tracking paused")
-            .setContentText("You're on duty. Tap to open Yatri and resume tracking.")
+            .setContentText("You're on duty. Tap to open ${AppConfig.APP_NAME} and resume tracking.")
             .setStyle(NotificationCompat.BigTextStyle().bigText(
-                "You're on duty. Tap to open Yatri and resume tracking. " +
+                "You're on duty. Tap to open ${AppConfig.APP_NAME} and resume tracking. " +
                     "Set Location to \"Allow all the time\" so this doesn't happen again."
             ))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -165,7 +166,7 @@ object TrackingController {
             val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             val channel = nm?.getNotificationChannel("loc_ch")
             if (channel != null && channel.importance == NotificationManager.IMPORTANCE_NONE) {
-                return "Turn on Yatri location notifications to start tracking"
+                return "Turn on ${AppConfig.APP_NAME} location notifications to start tracking"
             }
         }
         return null

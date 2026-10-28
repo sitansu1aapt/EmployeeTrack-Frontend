@@ -111,7 +111,7 @@ class DashboardFragment : Fragment() {
             .setTitle("Allow location all the time")
             .setMessage(
                 "So your duty tracking keeps working after a phone restart or app update, " +
-                    "set Yatri's location permission to \"Allow all the time\"."
+                    "set ${AppConfig.APP_NAME}'s location permission to \"Allow all the time\"."
             )
             .setPositiveButton("Open settings") { _, _ ->
                 // Android 11+ opens the app's location permission page for this request.
@@ -344,7 +344,7 @@ class DashboardFragment : Fragment() {
                 if (!isLocationChannelEnabled(ctx)) {
                     android.widget.Toast.makeText(
                         ctx,
-                        "Please enable Yatri location notifications in system settings to start background tracking",
+                        "Please enable ${AppConfig.APP_NAME} location notifications in system settings to start background tracking",
                         android.widget.Toast.LENGTH_LONG
                     ).show()
                     setTrackingSwitch(false)

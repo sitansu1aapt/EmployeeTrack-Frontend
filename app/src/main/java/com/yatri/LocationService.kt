@@ -231,7 +231,7 @@ class LocationService : Service() {
             nm.createNotificationChannel(NotificationChannel(channelId, "Location", NotificationManager.IMPORTANCE_LOW))
         }
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Yatri")
+            .setContentTitle(AppConfig.APP_NAME)
             .setContentText(text)
             .setSmallIcon(R.mipmap.ic_launcher)
             .build()

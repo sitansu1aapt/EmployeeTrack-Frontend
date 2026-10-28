@@ -2,4 +2,10 @@
 <resources>
 
     <style name="Theme.YatriApp" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+
+    <style name="Theme.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">#002D52</item>
+        <item name="android:statusBarColor">#002D52</item>
+        <item name="android:navigationBarColor">#002D52</item>
+    </style>
 </resources>
