@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.yatri.EmployeeActivity
+import com.yatri.helpdesk.HelpdeskDetailActivity
 import com.yatri.sleep.QuestionActivity
 import com.yatri.R
 import com.yatri.net.Network
@@ -64,6 +65,8 @@ class MyMessagingService : FirebaseMessagingService() {
             "sleep_alert" -> {
                 showSleepAlertNotification(remoteMessage)
             }
+
+            "HELPDESK_REQUEST_UPDATED" -> showHelpdeskNotification(remoteMessage)
 
             else -> {
                 // Handle generic notification
@@ -149,6 +152,28 @@ class MyMessagingService : FirebaseMessagingService() {
         )
     }
 
+    /** Helpdesk reply/status change: opens the request it is about. */
+    private fun showHelpdeskNotification(message: RemoteMessage) {
+        val requestId = message.data["helpdesk_request_id"]?.toLongOrNull()
+        val intent = if (requestId != null && requestId > 0) {
+            Intent(this, HelpdeskDetailActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(HelpdeskDetailActivity.EXTRA_REQUEST_ID, requestId)
+            }
+        } else {
+            Intent(this, EmployeeActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
+        }
+        val pi = PendingIntent.getActivity(this, 102, intent, PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0))
+        createNotification(
+            "default_channel",
+            message.notification?.title ?: message.data["title"] ?: "Helpdesk",
+            message.notification?.body ?: message.data["body"] ?: "Your request was updated",
+            R.mipmap.ic_launcher,
+            soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
+            contentIntent = pi
+        )
+    }
+
     private fun showDefaultNotification(message: RemoteMessage) {
         val channelId = "default_channel"
         val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -171,7 +196,8 @@ class MyMessagingService : FirebaseMessagingService() {
         soundUri: Uri? = null,
         priority: Int = NotificationCompat.PRIORITY_DEFAULT,
         vibrationPattern: LongArray? = null,
-        fullScreenIntent: PendingIntent? = null
+        fullScreenIntent: PendingIntent? = null,
+        contentIntent: PendingIntent? = null
     ) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -196,6 +222,8 @@ class MyMessagingService : FirebaseMessagingService() {
         vibrationPattern?.let {
             notificationBuilder.setVibrate(it)
         }
+
+        contentIntent?.let { notificationBuilder.setContentIntent(it) }
 
         // Set full screen intent
         fullScreenIntent?.let {

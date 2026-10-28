@@ -148,6 +148,15 @@
         <activity
             android:name=".ReleaseNotesActivity"
             android:exported="false"/>
+        <activity
+            android:name=".helpdesk.HelpdeskActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".helpdesk.CreateHelpdeskRequestActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".helpdesk.HelpdeskDetailActivity"
+            android:exported="false"/>
 
         <service
             android:name=".fcm.MyMessagingService"

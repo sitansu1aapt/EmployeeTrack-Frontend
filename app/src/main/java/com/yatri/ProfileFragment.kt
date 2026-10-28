@@ -11,9 +11,8 @@ import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.yatri.net.Network
@@ -68,6 +67,10 @@ class ProfileFragment : Fragment() {
         // Release Notes
         view.findViewById<Button>(R.id.btnReleaseNotes)?.setOnClickListener {
             startActivity(Intent(requireContext(), ReleaseNotesActivity::class.java))
+        }
+        // Helpdesk requests
+        view.findViewById<Button>(R.id.btnHelpdesk)?.setOnClickListener {
+            startActivity(Intent(requireContext(), com.yatri.helpdesk.HelpdeskActivity::class.java))
         }
         // Logout
         view.findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
@@ -168,6 +171,7 @@ class ProfileFragment : Fragment() {
                         // Update DataStore with latest information
                         requireContext().dataStore.edit {
                             it[PrefKeys.USER_NAME] = profileData.data.user.full_name
+                            it[PrefKeys.USER_EMPLOYEE_ID] = profileData.data.user.employee_id
                             it[PrefKeys.ACTIVE_ROLE_ID] = profileData.data.auth.roleId
                             it[PrefKeys.ACTIVE_ROLE_NAME] = profileData.data.user.activeContext.roleName
                             it[PrefKeys.ORG_ID] = profileData.data.user.organization_id
