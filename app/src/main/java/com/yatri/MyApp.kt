@@ -7,7 +7,14 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.graphics.Color
 
-class MyApp : Application() {
+import androidx.work.Configuration
+
+class MyApp : Application(), Configuration.Provider {
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setMinimumLoggingLevel(android.util.Log.INFO)
+            .build()
+
     override fun onCreate() {
         super.onCreate()
         AppContext.context = applicationContext
@@ -25,6 +32,12 @@ class MyApp : Application() {
         Analytics.setUserProperty("os_version", Build.VERSION.RELEASE ?: "")
         // Ensure default notification channel exists to avoid FCM warnings
         ensureDefaultNotificationChannel()
+        // Upload any location points captured while offline (runs once a network is available)
+        try {
+            com.yatri.location.LocationSync.scheduleWhenOnline(this)
+        } catch (e: Exception) {
+            android.util.Log.e("MyApp", "Failed to schedule offline location sync: ${e.message}", e)
+        }
     }
 
     private fun ensureDefaultNotificationChannel() {

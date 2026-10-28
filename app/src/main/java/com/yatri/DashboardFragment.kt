@@ -37,8 +37,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.text.SimpleDateFormat
 import java.util.*
 
+/** Asked at most once per app launch, so the dialog doesn't reappear on every dashboard refresh. */
+private var askedBackgroundLocation = false
+
 class DashboardFragment : Fragment() {
     private val permReq = 2001
+    private val backgroundPermReq = 2002
     private val PREF_TRACKING = "background_tracking"
     private val PREF_NAME = "dashboard_prefs"
     private lateinit var tvDutyStatus: TextView
@@ -57,6 +61,60 @@ class DashboardFragment : Fragment() {
     // Location dialog reference
     private var locationServicesDialog: AlertDialog? = null
     private var locationReady = false
+
+    // Tracking follows duty (see TrackingController). Guard so programmatic switch updates
+    // don't re-enter the switch listener.
+    private var settingTrackingSwitch = false
+    private var trackingBlockedToastShown = false
+
+    private fun setTrackingSwitch(checked: Boolean) {
+        val sw = view?.findViewById<Switch>(R.id.swBackground) ?: return
+        settingTrackingSwitch = true
+        sw.isChecked = checked
+        settingTrackingSwitch = false
+        updateBackgroundStatus(checked)
+    }
+
+    /** Start/stop tracking to match duty and reflect the result on the switch. */
+    private fun syncTrackingWithDuty(onDuty: Boolean) {
+        val ctx = context ?: return
+        val blocked = com.yatri.location.TrackingController.onDutyStatusKnown(ctx, onDuty)
+        setTrackingSwitch(onDuty && blocked == null)
+        if (onDuty && blocked == null) maybeAskBackgroundLocation()
+        if (onDuty && blocked != null) {
+            tvBackgroundStatus.text = "Inactive — $blocked"
+            if (!trackingBlockedToastShown) {
+                android.widget.Toast.makeText(ctx, blocked, android.widget.Toast.LENGTH_LONG).show()
+                trackingBlockedToastShown = true
+            }
+        } else {
+            trackingBlockedToastShown = false
+        }
+    }
+
+    /**
+     * Tracking can only resume on its own after an app update or phone restart if location is
+     * "Allow all the time". Explain and ask once per app launch while on duty.
+     */
+    private fun maybeAskBackgroundLocation() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q || askedBackgroundLocation) return
+        val act = activity ?: return
+        if (ContextCompat.checkSelfPermission(act, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) return
+        askedBackgroundLocation = true
+        AlertDialog.Builder(act)
+            .setTitle("Allow location all the time")
+            .setMessage(
+                "So your duty tracking keeps working after a phone restart or app update, " +
+                    "set Yatri's location permission to \"Allow all the time\"."
+            )
+            .setPositiveButton("Open settings") { _, _ ->
+                // Android 11+ opens the app's location permission page for this request.
+                @Suppress("DEPRECATION")
+                requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), backgroundPermReq)
+            }
+            .setNegativeButton("Later", null)
+            .show()
+    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == permReq) {
@@ -87,8 +145,7 @@ class DashboardFragment : Fragment() {
         // Restore tracking switch state
         val prefs = requireContext().getSharedPreferences(PREF_NAME, android.content.Context.MODE_PRIVATE)
         val trackingActive = prefs.getBoolean(PREF_TRACKING, false)
-        view.findViewById<Switch>(R.id.swBackground).isChecked = trackingActive
-        updateBackgroundStatus(trackingActive)
+        setTrackingSwitch(trackingActive)
 
         // Fetch duty status initially
         fetchDutyStatusAndUpdateUI()
@@ -121,7 +178,19 @@ class DashboardFragment : Fragment() {
             startActivity(Intent(requireContext(), PatrolDashboardActivity::class.java))
         }
         view.findViewById<Switch>(R.id.swBackground).setOnCheckedChangeListener { switchView, isChecked ->
+            if (settingTrackingSwitch) return@setOnCheckedChangeListener
             val ctx = requireContext()
+            // Tracking follows duty: it can't be switched off while on duty, or on while off duty.
+            if (!isChecked && isOnDuty) {
+                android.widget.Toast.makeText(ctx, "Tracking stays on while you're on duty. Check out to stop it.", android.widget.Toast.LENGTH_SHORT).show()
+                setTrackingSwitch(true)
+                return@setOnCheckedChangeListener
+            }
+            if (isChecked && !isOnDuty) {
+                android.widget.Toast.makeText(ctx, "Tracking starts automatically when you check in.", android.widget.Toast.LENGTH_SHORT).show()
+                setTrackingSwitch(false)
+                return@setOnCheckedChangeListener
+            }
             // Persist switch state
             val prefs = ctx.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             prefs.edit().putBoolean(PREF_TRACKING, isChecked).apply()
@@ -140,7 +209,7 @@ class DashboardFragment : Fragment() {
                         permReq
                     )
                     android.widget.Toast.makeText(ctx, "Grant location permission to start tracking", android.widget.Toast.LENGTH_SHORT).show()
-                    switchView.isChecked = false
+                    setTrackingSwitch(false)
                     prefs.edit().putBoolean(PREF_TRACKING, false).apply()
                     return@setOnCheckedChangeListener
                 }
@@ -173,7 +242,7 @@ class DashboardFragment : Fragment() {
                         }
                         .show()
 
-                    switchView.isChecked = false
+                    setTrackingSwitch(false)
                     prefs.edit().putBoolean(PREF_TRACKING, false).apply()
                     return@setOnCheckedChangeListener
                 }
@@ -192,7 +261,7 @@ class DashboardFragment : Fragment() {
                         "Enable notification permission to start background tracking",
                         android.widget.Toast.LENGTH_LONG
                     ).show()
-                    switchView.isChecked = false
+                    setTrackingSwitch(false)
                     prefs.edit().putBoolean(PREF_TRACKING, false).apply()
                     return@setOnCheckedChangeListener
                 }
@@ -203,18 +272,21 @@ class DashboardFragment : Fragment() {
                         "Please enable Yatri location notifications in system settings to start background tracking",
                         android.widget.Toast.LENGTH_LONG
                     ).show()
-                    switchView.isChecked = false
+                    setTrackingSwitch(false)
                     prefs.edit().putBoolean(PREF_TRACKING, false).apply()
                     return@setOnCheckedChangeListener
                 }
 
+                // Only reached on duty (e.g. retrying after granting a missing permission).
                 android.util.Log.d("LocationService", "Starting foreground location service")
-                ctx.startForegroundService(Intent(ctx, LocationService::class.java))
-                updateBackgroundStatus(true)
+                val blocked = com.yatri.location.TrackingController.start(ctx)
+                setTrackingSwitch(blocked == null)
+                if (blocked != null) android.widget.Toast.makeText(ctx, blocked, android.widget.Toast.LENGTH_LONG).show()
             } else {
+                // Only reached off duty, where tracking is already stopped.
                 android.util.Log.d("LocationService", "Stopping location service")
-                ctx.stopService(Intent(ctx, LocationService::class.java))
-                updateBackgroundStatus(false)
+                com.yatri.location.TrackingController.stop(ctx)
+                setTrackingSwitch(false)
             }
         }
     }
@@ -409,8 +481,7 @@ class DashboardFragment : Fragment() {
         // Restore tracking switch state
         val prefs = requireContext().getSharedPreferences(PREF_NAME, android.content.Context.MODE_PRIVATE)
         val trackingActive = prefs.getBoolean(PREF_TRACKING, false)
-        view?.findViewById<Switch>(R.id.swBackground)?.isChecked = trackingActive
-        updateBackgroundStatus(trackingActive)
+        setTrackingSwitch(trackingActive)
 
         // Refresh duty status when returning to dashboard
         fetchDutyStatusAndUpdateUI()
@@ -573,14 +644,21 @@ class DashboardFragment : Fragment() {
                                 put("longitude", lng)
                                 put("accuracy", acc)
                             }.toString()
+                            val token = TokenStore.token
+                            val url = "${AppConfig.API_BASE_URL}locations/me/update"
+                            android.util.Log.i("LOCATION_API", "🌐 [Dashboard Manual Update] Server: ${AppConfig.API_BASE_URL} | Type: locations/me/update | URL: $url | Lat=$lat, Lng=$lng, Acc=$acc")
                             val req = okhttp3.Request.Builder()
-                                .url("${AppConfig.API_BASE_URL}locations/me/update")
+                                .url(url)
+                                .apply {
+                                    if (!token.isNullOrBlank()) header("Authorization", "Bearer $token")
+                                }
                                 .post(body.toRequestBody("application/json".toMediaType()))
                                 .build()
-                            okhttp3.OkHttpClient().newCall(req).execute().close()
-                            android.util.Log.d("DashboardLocation", "Location sent to server successfully")
+                            okhttp3.OkHttpClient().newCall(req).execute().use { resp ->
+                                android.util.Log.i("LOCATION_API", "📥 [Dashboard Manual Update] Response code=${resp.code} for $url")
+                            }
                         } catch (e: Exception) {
-                            android.util.Log.e("DashboardLocation", "Failed to send location to server", e)
+                            android.util.Log.e("LOCATION_API", "❌ [Dashboard Manual Update] Failed to send location to server ${AppConfig.API_BASE_URL}", e)
                         }
                     }
                 }
@@ -611,7 +689,17 @@ class DashboardFragment : Fragment() {
                 val status = resp.code
                 val body = resp.body?.string().orEmpty()
                 android.util.Log.d("DashboardDuty", "Response status=$status body=${body.take(300)}")
-                
+
+                if (status !in 200..299) {
+                    // Server error / auth problem: don't treat it as "off duty" (that would stop
+                    // tracking); keep tracking in line with the last known duty state instead.
+                    view?.post {
+                        val ctx = context ?: return@post
+                        syncTrackingWithDuty(com.yatri.location.TrackingController.lastKnownOnDuty(ctx))
+                    }
+                    return@thread
+                }
+
                 val isOnDutyFromApi = body.contains("\"is_on_duty\":true")
                 
                 // Try to extract check_in_time from response
@@ -634,7 +722,12 @@ class DashboardFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 android.util.Log.e("DashboardDuty", "Failed to fetch duty status", e)
-                // leave existing state
+                // Offline: keep tracking in line with the last known duty state so an on-duty
+                // employee who opens the app without network is still tracked (points queue offline).
+                view?.post {
+                    val ctx = context ?: return@post
+                    syncTrackingWithDuty(com.yatri.location.TrackingController.lastKnownOnDuty(ctx))
+                }
             }
         }
     }
@@ -677,6 +770,9 @@ class DashboardFragment : Fragment() {
         btnCheckIn.alpha = if (isOnDuty) 0.5f else 1f
         btnCheckOut.isEnabled = isOnDuty
         btnCheckOut.alpha = if (isOnDuty) 1f else 0.5f
+
+        // Tracking follows duty: on after check-in / login / app open while on duty, off after check-out.
+        syncTrackingWithDuty(isOnDuty)
     }
 
     private fun startTimer() {

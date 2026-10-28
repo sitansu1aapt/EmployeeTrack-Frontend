@@ -31,10 +31,8 @@ class ProfileFragment : Fragment() {
         // Load profile data from API
         loadProfileData(view)
         // Background tracking
-        view.findViewById<Switch>(R.id.swBackground)?.setOnCheckedChangeListener { _, isChecked ->
-            val ctx = requireContext()
-            if (isChecked) ctx.startService(Intent(ctx, LocationService::class.java)) else ctx.stopService(Intent(ctx, LocationService::class.java))
-        }
+        // Tracking follows duty (TrackingController); this switch only mirrors that state.
+        view.findViewById<Switch>(R.id.swBackground)?.let { bindTrackingSwitch(it) }
         // Change password (placeholder)
         view.findViewById<Button>(R.id.btnChangePassword)?.setOnClickListener {
             android.widget.Toast.makeText(requireContext(), "Change Password: Coming soon", android.widget.Toast.LENGTH_SHORT).show()
@@ -56,6 +54,8 @@ class ProfileFragment : Fragment() {
                 override fun onNothingSelected(parent: android.widget.AdapterView<*>) {}
             })
         }
+        // Location update frequency (applies live to running tracking)
+        view.findViewById<Spinner>(R.id.spinnerTrackingInterval)?.let { bindIntervalSpinner(it) }
         // Update FCM
         view.findViewById<Button>(R.id.btnUpdateFcm)?.setOnClickListener {
             android.widget.Toast.makeText(requireContext(), "Update FCM Token: Coming soon", android.widget.Toast.LENGTH_SHORT).show()
@@ -72,6 +72,8 @@ class ProfileFragment : Fragment() {
         // Logout
         view.findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
             lifecycleScope.launch {
+                // Stop duty tracking so it doesn't keep running (or restart on reboot) after logout
+                com.yatri.location.TrackingController.onLogout(requireContext())
                 // Clear DataStore preferences
                 requireContext().dataStore.edit { it.clear() }
                 // Clear TokenStore
@@ -97,7 +99,40 @@ class ProfileFragment : Fragment() {
             view.findViewById<TextView>(R.id.tvVersion)?.text = "v$versionName"
         }
     }
-    
+
+    private fun bindIntervalSpinner(spinner: Spinner) {
+        val ctx = requireContext()
+        val options = com.yatri.location.TrackingSettings.OPTIONS_SECONDS
+        spinner.adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, options.map { "Every $it sec" })
+        spinner.setSelection(options.indexOf(com.yatri.location.TrackingSettings.intervalSeconds(ctx)).coerceAtLeast(0), false)
+        spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>, v: View?, position: Int, id: Long) {
+                val seconds = options[position]
+                if (seconds == com.yatri.location.TrackingSettings.intervalSeconds(ctx)) return
+                com.yatri.location.TrackingSettings.setIntervalSeconds(ctx, seconds)
+                android.widget.Toast.makeText(ctx, "Location will be sent every $seconds sec", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>) {}
+        }
+    }
+
+    /** Show the real tracking state; a tap explains the duty rule and snaps back to it. */
+    private fun bindTrackingSwitch(sw: Switch) {
+        val ctx = context ?: return
+        sw.setOnCheckedChangeListener(null)
+        sw.isChecked = com.yatri.location.TrackingController.isTrackingOn(ctx)
+        sw.setOnCheckedChangeListener { _, _ ->
+            val on = com.yatri.location.TrackingController.isTrackingOn(ctx)
+            android.widget.Toast.makeText(
+                ctx,
+                if (on) "Tracking stays on while you're on duty. Check out to stop it."
+                else "Tracking starts automatically when you check in.",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            bindTrackingSwitch(sw)
+        }
+    }
+
     private fun loadProfileData(view: View) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {

@@ -345,35 +345,92 @@ class ActivePatrolActivity : AppCompatActivity() {
     }
 
     private fun handleQrResult(qrData: String) {
-        // Parse QR JSON
+        Log.d(TAG, "handleQrResult received raw string: $qrData")
         val checkpoint = parseCheckpointFromQr(qrData) ?: run {
-            Toast.makeText(this, "Invalid QR code", Toast.LENGTH_SHORT).show()
+            AlertDialog.Builder(this)
+                .setTitle("Invalid QR Code")
+                .setMessage("Scanned QR code is empty or invalid.\nRaw data: $qrData")
+                .setPositiveButton("OK") { _, _ -> startCamera() }
+                .show()
             return
         }
-        // Get Location
-        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-            if (location == null) {
-                Toast.makeText(this, "Unable to get location", Toast.LENGTH_SHORT).show()
-                return@addOnSuccessListener
+
+        // Haptic feedback on detection
+        try {
+            val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+            if (vibrator != null && vibrator.hasVibrator()) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(android.os.VibrationEffect.createOneShot(150, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(150)
+                }
             }
-            showConfirmationDialog(checkpoint, location)
+        } catch (_: Exception) {}
+
+        fetchLocationAndConfirm(checkpoint)
+    }
+
+    private fun fetchLocationAndConfirm(checkpoint: QrCheckpoint) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            AlertDialog.Builder(this)
+                .setTitle("Location Permission Required")
+                .setMessage("Location access is required to record checkpoint scan.")
+                .setPositiveButton("OK") { _, _ -> startCamera() }
+                .show()
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            if (location != null) {
+                showConfirmationDialog(checkpoint, location)
+            } else {
+                Log.w(TAG, "lastLocation returned null, attempting getCurrentLocation fallback...")
+                fusedLocationClient.getCurrentLocation(
+                    com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
+                    null
+                ).addOnSuccessListener { freshLocation: Location? ->
+                    if (freshLocation != null) {
+                        showConfirmationDialog(checkpoint, freshLocation)
+                    } else {
+                        AlertDialog.Builder(this)
+                            .setTitle("Location Unavailable")
+                            .setMessage("Unable to obtain GPS location. Please check if Location/GPS is turned ON and try again.")
+                            .setPositiveButton("Retry") { _, _ -> startCamera() }
+                            .show()
+                    }
+                }.addOnFailureListener { e ->
+                    AlertDialog.Builder(this)
+                        .setTitle("Location Error")
+                        .setMessage("Failed to get location: ${e.message}")
+                        .setPositiveButton("Retry") { _, _ -> startCamera() }
+                        .show()
+                }
+            }
+        }.addOnFailureListener { e ->
+            AlertDialog.Builder(this)
+                .setTitle("Location Failure")
+                .setMessage("Error retrieving location: ${e.message}")
+                .setPositiveButton("Retry") { _, _ -> startCamera() }
+                .show()
         }
     }
 
     private fun showConfirmationDialog(checkpoint: QrCheckpoint, location: Location) {
         val message = "\uD83D\uDCCD <b>Checkpoint:</b> ${checkpoint.checkpointName}<br/>" +
-                "<b>QR:</b> ${checkpoint.qrCodeData}<br/>" +
-                "<b>Device Location:</b> ${location.latitude},${location.longitude}<br/>" +
-                "<b>Checkpoint Location:</b> ${checkpoint.latitude},${checkpoint.longitude}"
+                "<b>QR Data:</b> ${checkpoint.qrCodeData}<br/>" +
+                "<b>Device Location:</b> ${location.latitude}, ${location.longitude}<br/>" +
+                if (checkpoint.latitude != 0.0) "<b>Checkpoint Target:</b> ${checkpoint.latitude}, ${checkpoint.longitude}" else ""
         Log.d(TAG, "Showing confirmation dialog for checkpoint: $checkpoint, location: $location")
         AlertDialog.Builder(this)
-            .setTitle("\uD83D\uDD0D Confirm Scan")
+            .setTitle("\uD83D\uDD0D Confirm Checkpoint Scan")
             .setMessage(android.text.Html.fromHtml(message))
-            .setPositiveButton("\u2705 Confirm") { _, _ ->
+            .setPositiveButton("\u2705 Confirm Scan") { _, _ ->
                 Log.d(TAG, "User confirmed scan. Calling scanCheckpoint...")
                 scanCheckpoint(checkpoint, location)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Cancel") { _, _ -> startCamera() }
             .show()
     }
 
@@ -387,21 +444,19 @@ class ActivePatrolActivity : AppCompatActivity() {
         if (sessionId.isNullOrEmpty() || roleId.isNullOrEmpty()) {
             Log.e(TAG, "sessionId or roleId is null or empty! sessionId=$sessionId, roleId=$roleId")
             runOnUiThread {
-                Toast.makeText(this@ActivePatrolActivity, "Session or role not set. Cannot scan.", Toast.LENGTH_LONG).show()
+                AlertDialog.Builder(this@ActivePatrolActivity)
+                    .setTitle("Session Error")
+                    .setMessage("Patrol session or role ID is missing (sessionId=$sessionId, roleId=$roleId). Cannot submit scan.")
+                    .setPositiveButton("OK") { _, _ -> finish() }
+                    .show()
             }
             return
         }
         Log.d(TAG, "scanCheckpoint called with payload: $payload, sessionId=$sessionId, roleId=$roleId")
         val fullUrl = "${AppConfig.API_BASE_URL}employee/patrol/sessions/${sessionId}/scan?roleId=${roleId}"
         Log.d(TAG, "SCAN API URL: $fullUrl")
-        Log.d(TAG, "Method: POST")
-        Log.d(TAG, "Headers: Authorization: Bearer <redacted>, Accept: application/json, Content-Type: application/json")
-        Log.d(TAG, "Request body: $payload")
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                runOnUiThread {
-                   // Toast.makeText(this@ActivePatrolActivity, "Sending scan to server...", Toast.LENGTH_SHORT).show()
-                }
                 val api = Network.retrofit.create<PatrolApi>()
                 val resp = api.scanCheckpoint(sessionId!!, roleId!!, payload)
                 val rawError = try { resp.errorBody()?.string() } catch (_: Exception) { null }
@@ -422,7 +477,6 @@ class ActivePatrolActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (resp.isSuccessful && resp.body()?.status == "success") {
                         Toast.makeText(this@ActivePatrolActivity, "Checkpoint scanned successfully!", Toast.LENGTH_LONG).show()
-                        // Refresh status to determine if patrol can be ended
                         fetchPatrolStatus()
                         if (remainingCheckpointsCount == 0) {
                             AlertDialog.Builder(this@ActivePatrolActivity)
@@ -432,7 +486,6 @@ class ActivePatrolActivity : AppCompatActivity() {
                                 .setNegativeButton("Continue", null)
                                 .show()
                         } else {
-                            // Allow scanning next checkpoint
                             startCamera()
                         }
                     } else {
@@ -440,19 +493,16 @@ class ActivePatrolActivity : AppCompatActivity() {
                         Log.e(TAG, "Scan failed: code=${resp.code()} raw=${raw ?: "<empty>"}")
                         val errorMsg = try {
                             val obj = if (!raw.isNullOrEmpty()) org.json.JSONObject(raw) else null
-                            obj?.optString("message") ?: (resp.body()?.message ?: "Unknown error. Please try again.")
+                            obj?.optString("message") ?: (resp.body()?.message ?: "HTTP ${resp.code()}: Unknown server response.")
                         } catch (_: Exception) {
-                            resp.body()?.message ?: (raw ?: "Unknown error. Please try again.")
+                            resp.body()?.message ?: (raw ?: "HTTP ${resp.code()}: Server returned error.")
                         }
 
                         val isAlreadyScanned = errorMsg.contains("already been scanned", ignoreCase = true)
                         val builder = AlertDialog.Builder(this@ActivePatrolActivity)
-                            .setTitle(if (isAlreadyScanned) "Already Scanned" else "Scan Failed")
-                            .setMessage(errorMsg)
-                            .setPositiveButton("OK") { _, _ ->
-                                // Allow re-scan by restarting camera/analyzer
-                                startCamera()
-                            }
+                            .setTitle(if (isAlreadyScanned) "Already Scanned" else "Scan Failed (HTTP ${resp.code()})")
+                            .setMessage("$errorMsg\n\nScanned QR Data: ${checkpoint.qrCodeData}")
+                            .setPositiveButton("OK") { _, _ -> startCamera() }
 
                         if (isAlreadyScanned) {
                             builder.setNegativeButton("View Status") { _, _ ->
@@ -467,9 +517,11 @@ class ActivePatrolActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e(TAG, "Exception in scanCheckpoint", e)
                 runOnUiThread {
-                    Toast.makeText(this@ActivePatrolActivity, "Error: ${e.message ?: "Unknown error. Please try again."}", Toast.LENGTH_LONG).show()
-                    // Restart camera to allow re-scanning after unexpected exceptions
-                    startCamera()
+                    AlertDialog.Builder(this@ActivePatrolActivity)
+                        .setTitle("Network / Connection Error")
+                        .setMessage("Failed to connect to server: ${e.message ?: "Unknown network error"}\n\nPlease check internet connection and try again.")
+                        .setPositiveButton("Retry") { _, _ -> startCamera() }
+                        .show()
                 }
             }
         }
@@ -480,18 +532,53 @@ class ActivePatrolActivity : AppCompatActivity() {
         cameraExecutor.shutdown()
     }
 
-    // QR code parsing logic
+    // Dual-format QR code parsing logic (Handles JSON payloads AND plain UUID strings)
     private fun parseCheckpointFromQr(qr: String): QrCheckpoint? {
+        val trimmed = qr.trim()
+        if (trimmed.isEmpty()) return null
+
         return try {
-            val json = org.json.JSONObject(qr)
-            QrCheckpoint(
-                qrCodeData = json.getString("qr_code_data"),
-                latitude = json.getDouble("latitude"),
-                longitude = json.getDouble("longitude"),
-                checkpointName = json.getString("checkpoint_name")
-            )
+            if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+                val json = org.json.JSONObject(trimmed)
+                val qrData = when {
+                    json.has("qr_code_data") -> json.getString("qr_code_data")
+                    json.has("qrCodeData") -> json.getString("qrCodeData")
+                    else -> trimmed
+                }
+
+                val lat = if (json.has("latitude")) json.optDouble("latitude", 0.0) else 0.0
+                val lng = if (json.has("longitude")) json.optDouble("longitude", 0.0) else 0.0
+
+                val name = when {
+                    json.has("checkpoint_name") -> json.getString("checkpoint_name")
+                    json.has("checkpointName") -> json.getString("checkpointName")
+                    json.has("description") -> json.getString("description")
+                    else -> "Checkpoint ($qrData)"
+                }
+
+                QrCheckpoint(
+                    qrCodeData = qrData,
+                    latitude = lat,
+                    longitude = lng,
+                    checkpointName = name
+                )
+            } else {
+                // Raw string or UUID
+                QrCheckpoint(
+                    qrCodeData = trimmed,
+                    latitude = 0.0,
+                    longitude = 0.0,
+                    checkpointName = "Scanned Checkpoint"
+                )
+            }
         } catch (e: Exception) {
-            null
+            Log.w(TAG, "Failed JSON parse for QR, falling back to raw string: ${e.message}")
+            QrCheckpoint(
+                qrCodeData = trimmed,
+                latitude = 0.0,
+                longitude = 0.0,
+                checkpointName = "Scanned Checkpoint"
+            )
         }
     }
 

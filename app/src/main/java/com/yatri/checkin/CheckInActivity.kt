@@ -557,6 +557,9 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
                 runOnUiThread {
                     Toast.makeText(this@CheckInActivity, "Submitted", Toast.LENGTH_SHORT).show()
+                    // Tracking follows duty: start right after check-in, stop after check-out
+                    // (the dashboard re-confirms against the server when it resumes).
+                    com.yatri.location.TrackingController.onDutyStatusKnown(this@CheckInActivity, onDuty = mode != "checkout")
                     // Analytics: success
                     Analytics.log(if (mode == "checkout") "checkout_success" else "checkin_success", mapOf(
                         "lat" to latitude,
