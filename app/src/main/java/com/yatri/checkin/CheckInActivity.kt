@@ -489,17 +489,70 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
             android.util.Log.w("CheckInActivity", "submit() called while isSubmitting=true, ignoring duplicate tap")
             return
         }
-        isSubmitting = true
-        val prefs = try { kotlinx.coroutines.runBlocking { applicationContext.dataStore.data.first() } } catch (_: Exception) { null }
+        
         val latitude = lat
         val longitude = lng
         val accuracy = acc
         val selfie = selfieUrl
+        
         if (latitude == null || longitude == null || accuracy == null || selfie == null) {
             Toast.makeText(this, "Missing data", Toast.LENGTH_SHORT).show()
-            isSubmitting = false
             return
         }
+        
+        isSubmitting = true
+        val mode = intent.getStringExtra("mode") ?: "checkin"
+        
+        // Checkout Grace Period Check
+        if (mode == "checkout") {
+            val checkInTimeStr = intent.getStringExtra("check_in_time")
+            val graceCheckout = intent.getIntExtra("grace_period_checkout", 0)
+            
+            if (checkInTimeStr != null && graceCheckout > 0) {
+                try {
+                    val checkInDate = parseUtcTime(checkInTimeStr)
+                    if (checkInDate != null) {
+                        val durationMs = System.currentTimeMillis() - checkInDate.time
+                        val durationMinutes = durationMs / (1000 * 60)
+                        
+                        if (durationMinutes < graceCheckout) {
+                            android.app.AlertDialog.Builder(this)
+                                .setTitle("Early Checkout")
+                                .setMessage("You have worked for only $durationMinutes minutes. The minimum required duration for this shift is $graceCheckout minutes. Please wait until the grace period is over.")
+                                .setNegativeButton("Close") { dialog, _ ->
+                                    isSubmitting = false
+                                    dialog.dismiss()
+                                }
+                                .setCancelable(false)
+                                .show()
+                            return
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("CheckInActivity", "Error calculating checkout duration", e)
+                }
+            }
+        }
+        
+        performSubmit(latitude, longitude, accuracy, selfie)
+    }
+
+    private fun parseUtcTime(timeStr: String): Date? {
+        val formats = listOf(
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        )
+        for (format in formats) {
+            try {
+                format.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                return format.parse(timeStr)
+            } catch (_: Exception) {}
+        }
+        return null
+    }
+
+    private fun performSubmit(latitude: Double, longitude: Double, accuracy: Double, selfie: String) {
+        val prefs = try { kotlinx.coroutines.runBlocking { applicationContext.dataStore.data.first() } } catch (_: Exception) { null }
         val mode = intent.getStringExtra("mode") ?: "checkin"
         val notes = findViewById<EditText>(R.id.etNotes).text?.toString()?.trim().orEmpty()
         val device = DeviceInfo(
@@ -618,7 +671,17 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
                         } ?: "Check-in failed (${e.code()}). Please try again."
 
                         runOnUiThread {
-                            android.widget.Toast.makeText(this@CheckInActivity, userMessage, android.widget.Toast.LENGTH_LONG).show()
+                            // 403 messages (e.g. check-in window closed) can be long — show a dialog
+                            if (e.code() == 403) {
+                                android.app.AlertDialog.Builder(this@CheckInActivity)
+                                    .setTitle("Check-in Not Allowed")
+                                    .setMessage(userMessage)
+                                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                                    .setCancelable(false)
+                                    .show()
+                            } else {
+                                android.widget.Toast.makeText(this@CheckInActivity, userMessage, android.widget.Toast.LENGTH_LONG).show()
+                            }
                         }
                     }
                     is SocketTimeoutException -> {
@@ -666,5 +729,3 @@ class CheckInActivity : AppCompatActivity(), OnMapReadyCallback {
         return formatter.format(Date())
     }
 }
-
-

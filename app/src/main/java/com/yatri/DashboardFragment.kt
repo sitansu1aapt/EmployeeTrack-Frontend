@@ -57,6 +57,12 @@ class DashboardFragment : Fragment() {
     private var timerHandler: Handler? = null
     private var timerRunnable: Runnable? = null
     private var isOnDuty = false
+    private var checkInTimeStr: String? = null
+    private var gracePeriodCheckout: Int = 0
+    
+    private var supervisorName: String? = null
+    private var supervisorRole: String? = null
+    private var supervisorId: Int? = null
     
     // Location dialog reference
     private var locationServicesDialog: AlertDialog? = null
@@ -149,6 +155,7 @@ class DashboardFragment : Fragment() {
 
         // Fetch duty status initially
         fetchDutyStatusAndUpdateUI()
+        fetchSupervisor()
     }
 
     private fun initializeViews(view: View) {
@@ -166,7 +173,75 @@ class DashboardFragment : Fragment() {
         }
         
         btnCheckOut.setOnClickListener {
-            startActivity(Intent(requireContext(), com.yatri.checkin.CheckInActivity::class.java).putExtra("mode", "checkout"))
+            val intent = Intent(requireContext(), com.yatri.checkin.CheckInActivity::class.java)
+            intent.putExtra("mode", "checkout")
+            intent.putExtra("check_in_time", checkInTimeStr)
+            intent.putExtra("grace_period_checkout", gracePeriodCheckout)
+            startActivity(intent)
+        }
+
+        view.findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnChat)?.setOnClickListener {
+            kotlin.concurrent.thread {
+                try {
+                    // Must match GET /messages/... partner used by RN admin chat (same Firestore conversation id).
+                    val url = com.yatri.AppConfig.API_BASE_URL + "messages/supervisor"
+                    val token = com.yatri.TokenStore.token
+                    val reqBuilder = okhttp3.Request.Builder().url(url)
+                    if (!token.isNullOrBlank()) reqBuilder.header("Authorization", "Bearer $token")
+                    val resp = okhttp3.OkHttpClient().newCall(reqBuilder.build()).execute()
+                    val body = resp.body?.string().orEmpty()
+                    if (!resp.isSuccessful) {
+                        activity?.runOnUiThread {
+                            android.widget.Toast.makeText(
+                                requireContext(),
+                                "Could not load supervisor for chat",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        return@thread
+                    }
+                    val jsonResponse = org.json.JSONObject(body)
+                    val data = jsonResponse.optJSONObject("data") ?: return@thread
+                    // messages/supervisor: data is the contact. my-supervisor: data.supervisor
+                    val supervisor = when {
+                        data.has("supervisor") && !data.isNull("supervisor") ->
+                            data.getJSONObject("supervisor")
+                        else -> data
+                    }
+                    val rawId = supervisor.opt("user_id")
+                    val receiverId = when (rawId) {
+                        null, org.json.JSONObject.NULL -> ""
+                        else -> rawId.toString()
+                    }
+                    if (receiverId.isEmpty() || receiverId == "-1") {
+                        activity?.runOnUiThread {
+                            android.widget.Toast.makeText(
+                                requireContext(),
+                                "No supervisor assigned for messaging",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        return@thread
+                    }
+                    val name = supervisor.optString("full_name", supervisor.optString("name", supervisorName ?: "Administrator"))
+                    val role = supervisor.optString("role_name", supervisor.optString("role", supervisorRole ?: "Admin"))
+                    activity?.runOnUiThread {
+                        startActivity(Intent(requireContext(), ChatActivity::class.java)
+                            .putExtra(EXTRA_RECEIVER_USER_ID, receiverId)
+                            .putExtra("adminName", name)
+                            .putExtra("adminRole", role))
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("Dashboard", "Open chat failed", e)
+                    activity?.runOnUiThread {
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            "Unable to open messages",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
         }
         
         
@@ -702,23 +777,26 @@ class DashboardFragment : Fragment() {
 
                 val isOnDutyFromApi = body.contains("\"is_on_duty\":true")
                 
-                // Try to extract check_in_time from response
+                // Try to extract check_in_time and grace periods from response
                 var checkInTime: String? = null
+                var graceCheckout: Int = 0
                 try {
                     val jsonResponse = org.json.JSONObject(body)
                     if (jsonResponse.has("data") && !jsonResponse.isNull("data")) {
                         val data = jsonResponse.getJSONObject("data")
-                        if (data.has("check_in_time") && !data.isNull("check_in_time")) {
-                            checkInTime = data.getString("check_in_time")
-                        }
+                        checkInTime = data.optString("check_in_time", null)
+                        val gOut = data.optInt("grace_period_minutes_checkout", 0)
+                        val gIn = data.optInt("grace_period_minutes_checkin", 0)
+                        // Client-side fallback: if checkout grace is 0, use check-in grace
+                        graceCheckout = if (gOut > 0) gOut else gIn
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("DashboardDuty", "Error parsing check_in_time", e)
+                    android.util.Log.e("DashboardDuty", "Error parsing check_in_time or grace periods", e)
                 }
                 
-                android.util.Log.d("DashboardDuty", "Parsed isOnDuty=$isOnDutyFromApi, checkInTime=$checkInTime")
+                android.util.Log.d("DashboardDuty", "Parsed isOnDuty=$isOnDutyFromApi, checkInTime=$checkInTime, graceCheckout=$graceCheckout")
                 view?.post { 
-                    setDutyUI(isOnDutyFromApi, checkInTime)
+                    setDutyUI(isOnDutyFromApi, checkInTime, graceCheckout)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("DashboardDuty", "Failed to fetch duty status", e)
@@ -732,8 +810,10 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    private fun setDutyUI(isOnDuty: Boolean, checkInTime: String? = null) {
+    private fun setDutyUI(isOnDuty: Boolean, checkInTime: String? = null, graceCheckout: Int = 0) {
         this.isOnDuty = isOnDuty
+        this.checkInTimeStr = checkInTime
+        this.gracePeriodCheckout = graceCheckout
         tvDutyStatus.text = if (isOnDuty) "  On Duty" else "  Off Duty"
         
         // Handle timer - using same approach as React Native app
@@ -820,6 +900,42 @@ class DashboardFragment : Fragment() {
         android.util.Log.w("DashboardDuty", "Could not parse check-in time: $checkInTime")
         return null
     }
+
+    private fun fetchSupervisor() {
+        kotlin.concurrent.thread {
+            try {
+                val url = com.yatri.AppConfig.API_BASE_URL + "messages/supervisor"
+                val token = com.yatri.TokenStore.token
+                val reqBuilder = okhttp3.Request.Builder().url(url)
+                if (!token.isNullOrBlank()) reqBuilder.header("Authorization", "Bearer $token")
+                val req = reqBuilder.build()
+                val client = okhttp3.OkHttpClient()
+                val resp = client.newCall(req).execute()
+                val body = resp.body?.string().orEmpty()
+                
+                if (resp.isSuccessful) {
+                    val jsonResponse = org.json.JSONObject(body)
+                    if (jsonResponse.has("data") && !jsonResponse.isNull("data")) {
+                        val data = jsonResponse.getJSONObject("data")
+                        val supervisor = when {
+                            data.has("supervisor") && !data.isNull("supervisor") ->
+                                data.getJSONObject("supervisor")
+                            else -> data
+                        }
+                        if (supervisor.has("user_id") && !supervisor.isNull("user_id")) {
+                            supervisorName = supervisor.optString("full_name", supervisor.optString("name", "Administrator"))
+                            supervisorRole = supervisor.optString("role_name", supervisor.optString("role", "Admin"))
+                            val uid = supervisor.opt("user_id")
+                            supervisorId = when (uid) {
+                                is Number -> uid.toInt()
+                                else -> supervisor.optInt("user_id", -1)
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Dashboard", "Failed to fetch supervisor", e)
+            }
+        }
+    }
 }
-
-

@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.yatri"
-    compileSdk = 34
+    compileSdk = 35
 
     signingConfigs {
         create("release") {
@@ -128,6 +128,8 @@ dependencies {
     // Firebase Messaging only (no analytics/crashlytics)
     implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
     // Firebase Analytics
     implementation("com.google.firebase:firebase-analytics-ktx")
 

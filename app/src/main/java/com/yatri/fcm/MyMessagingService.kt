@@ -15,8 +15,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.yatri.ChatActivity
 import com.yatri.EmployeeActivity
 import com.yatri.helpdesk.HelpdeskDetailActivity
+import com.yatri.EXTRA_RECEIVER_USER_ID
 import com.yatri.sleep.QuestionActivity
 import com.yatri.R
 import com.yatri.net.Network
@@ -67,6 +69,10 @@ class MyMessagingService : FirebaseMessagingService() {
             }
 
             "HELPDESK_REQUEST_UPDATED" -> showHelpdeskNotification(remoteMessage)
+
+            "NEW_MESSAGE", "chat_message", "direct_message" -> {
+                showChatMessageNotification(remoteMessage)
+            }
 
             else -> {
                 // Handle generic notification
@@ -174,6 +180,43 @@ class MyMessagingService : FirebaseMessagingService() {
         )
     }
 
+    private fun showChatMessageNotification(message: RemoteMessage) {
+        val channelId = "message_channel"
+        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val senderId = message.data["sender_user_id"]
+            ?: message.data["from_user_id"]
+            ?: message.data["sender_id"]
+        val title = message.notification?.title
+            ?: message.data["title"]
+            ?: "New message"
+        val body = message.notification?.body
+            ?: message.data["body"]
+            ?: message.data["content"]
+            ?: "Open to read and reply"
+
+        val intent = Intent(this, ChatActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            if (!senderId.isNullOrBlank()) {
+                putExtra(EXTRA_RECEIVER_USER_ID, senderId)
+            }
+            putExtra("adminName", message.data["sender_name"] ?: "Admin")
+            putExtra("adminRole", message.data["sender_role"] ?: "Supervisor")
+        }
+        val piFlags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0)
+        val contentPi = PendingIntent.getActivity(this, 902, intent, piFlags)
+
+        createNotification(
+            channelId,
+            title,
+            body,
+            R.drawable.ic_message_notification,
+            soundUri = soundUri,
+            priority = NotificationCompat.PRIORITY_HIGH,
+            contentIntent = contentPi,
+            notificationId = ("chat_" + (senderId ?: "0")).hashCode()
+        )
+    }
+
     private fun showDefaultNotification(message: RemoteMessage) {
         val channelId = "default_channel"
         val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -197,7 +240,8 @@ class MyMessagingService : FirebaseMessagingService() {
         priority: Int = NotificationCompat.PRIORITY_DEFAULT,
         vibrationPattern: LongArray? = null,
         fullScreenIntent: PendingIntent? = null,
-        contentIntent: PendingIntent? = null
+        contentIntent: PendingIntent? = null,
+        notificationId: Int? = null,
     ) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -213,6 +257,8 @@ class MyMessagingService : FirebaseMessagingService() {
             .setPriority(priority)
             .setAutoCancel(true)
 
+        contentIntent?.let { notificationBuilder.setContentIntent(it) }
+
         // Set sound
         soundUri?.let {
             notificationBuilder.setSound(it)
@@ -222,8 +268,6 @@ class MyMessagingService : FirebaseMessagingService() {
         vibrationPattern?.let {
             notificationBuilder.setVibrate(it)
         }
-
-        contentIntent?.let { notificationBuilder.setContentIntent(it) }
 
         // Set full screen intent
         fullScreenIntent?.let {
@@ -238,8 +282,8 @@ class MyMessagingService : FirebaseMessagingService() {
             notificationBuilder.setLights(Color.YELLOW, 1000, 500)
         }
 
-        val notificationId = System.currentTimeMillis().toInt()
-        notificationManager.notify(notificationId, notificationBuilder.build())
+        val id = notificationId ?: System.currentTimeMillis().toInt()
+        notificationManager.notify(id, notificationBuilder.build())
     }
 
     // Create notification channel for Android O+
@@ -268,6 +312,7 @@ class MyMessagingService : FirebaseMessagingService() {
                 "emergency_channel" -> "Emergency Alerts"
                 "patrol_channel" -> "Patrol Assignments"
                 "sleep_alert_channel" -> "Sleep Tracking Alerts"
+                "message_channel" -> "Messages"
                 else -> "General Notifications"
             }
 
